@@ -12,7 +12,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
 /**
- * Safe bootstrap policy: only health is public and all unfinished API routes are denied.
+ * Safe bootstrap policy: health and login are public and all unfinished API routes are denied.
  * Member 2 must replace/extend this with the documented stateless JWT policy before
  * protected endpoints are exposed. Do not change this to permitAll for all routes.
  */
@@ -48,6 +48,8 @@ public class BootstrapSecurityConfig {
             )
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login")
+                    .permitAll()
                 .anyRequest().denyAll()
             );
         return http.build();
