@@ -3,6 +3,7 @@ package edu.mec.studentportal.registration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import edu.mec.studentportal.testsupport.TestAuthSecurityConfig;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicLong;
@@ -24,7 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(RegistrationTestSecurityConfig.class)
+@Import(TestAuthSecurityConfig.class)
 abstract class RegistrationIntegrationTestSupport {
     @Autowired
     JdbcTemplate jdbcTemplate;
@@ -48,6 +49,9 @@ abstract class RegistrationIntegrationTestSupport {
 
     @BeforeEach
     void cleanRegistrationData() {
+        jdbcTemplate.update("DELETE FROM notifications");
+        jdbcTemplate.update("DELETE FROM feedback");
+        jdbcTemplate.update("DELETE FROM announcements");
         jdbcTemplate.update("DELETE FROM registrations");
         jdbcTemplate.update("DELETE FROM events");
         jdbcTemplate.update("DELETE FROM student_profiles");

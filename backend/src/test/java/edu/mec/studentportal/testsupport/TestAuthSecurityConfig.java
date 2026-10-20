@@ -1,4 +1,4 @@
-package edu.mec.studentportal.registration;
+package edu.mec.studentportal.testsupport;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,18 +18,18 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Test-only stand-in for Member 2's JWT filter so MockMvc can exercise the registration
- * endpoints before the auth module is merged. Requests carry {@code X-Test-Auth: <userId>}
- * and are authenticated with that user id as principal name (ROLE_STUDENT authority).
- * This class lives in test sources only and never ships in the application.
+ * Test-only stand-in for Member 2's JWT filter so MockMvc can exercise feature endpoints before
+ * the auth module is merged. Requests carry {@code X-Test-Auth: <userId>} and are authenticated
+ * with that user id as principal name (the same convention controllers expect from the JWT
+ * subject). Test sources only; never ships in the application.
  */
 @TestConfiguration
-public class RegistrationTestSecurityConfig {
-    static final String TEST_AUTH_HEADER = "X-Test-Auth";
+public class TestAuthSecurityConfig {
+    public static final String TEST_AUTH_HEADER = "X-Test-Auth";
 
     @Bean
     @Order(0)
-    SecurityFilterChain registrationTestSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain testAuthSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/**")
             .csrf(csrf -> csrf.disable())
@@ -51,7 +51,7 @@ public class RegistrationTestSecurityConfig {
                     new UsernamePasswordAuthenticationToken(
                         header.trim(),
                         null,
-                        List.of(new SimpleGrantedAuthority("ROLE_STUDENT"))
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
                     );
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

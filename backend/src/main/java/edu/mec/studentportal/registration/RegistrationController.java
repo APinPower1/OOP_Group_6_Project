@@ -59,7 +59,7 @@ public class RegistrationController {
     }
 
     /** Resolves the server-side user id from the security principal (Member 2's JWT subject). */
-    private static long currentUserId(Authentication authentication) {
+    public static long currentUserId(Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             throw new ApiException(
                 HttpStatus.UNAUTHORIZED,
