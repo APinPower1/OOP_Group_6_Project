@@ -1,0 +1,8 @@
+flowchart TD
+  UI[Java Swing Views] --> CC[Client Controllers and SessionContext]
+  CC --> API[Shared HTTP API Client]
+  API -->|JSON + JWT| SEC[Spring Security / JWT]
+  SEC --> RC[REST Controllers]
+  RC --> SVC[Service Layer]
+  SVC --> DAO[JDBC DAOs / JdbcTemplate]
+  DAO --> DB[(MySQL / InnoDB)]

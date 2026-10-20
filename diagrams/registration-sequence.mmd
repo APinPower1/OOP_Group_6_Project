@@ -1,0 +1,27 @@
+sequenceDiagram
+  actor Student
+  participant Swing as Swing Client
+  participant API as RegistrationController
+  participant Service as RegistrationService
+  participant EventDAO
+  participant RegDAO
+  participant DB as MySQL
+  Student->>Swing: Select event and register
+  Swing->>API: POST /api/events/{id}/registrations + JWT
+  API->>Service: register(currentStudentId, eventId)
+  Service->>DB: Begin transaction
+  Service->>EventDAO: SELECT event ... FOR UPDATE
+  EventDAO-->>Service: status, startTime, capacity
+  Service->>RegDAO: Check/reactivate registration and count CONFIRMED
+  alt approved, upcoming, seat available
+    Service->>RegDAO: Insert/reactivate with ticket number
+    Service->>DB: Commit
+    Service-->>API: Registration response
+    API-->>Swing: 201 + ticket
+    Swing-->>Student: Show pass/confirmation
+  else event full/closed/duplicate
+    Service->>DB: Rollback
+    Service-->>API: Domain error
+    API-->>Swing: 409 with stable error code
+    Swing-->>Student: Show explanation
+  end

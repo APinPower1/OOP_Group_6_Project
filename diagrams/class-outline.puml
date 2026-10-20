@@ -1,0 +1,86 @@
+@startuml
+skinparam classAttributeIconSize 0
+abstract class User {
+  - id: long
+  - fullName: String
+  - email: String
+  - department: String
+  + getDashboard(): void
+}
+class Student {
+  - rollNumber: String
+  - semester: int
+  - batch: String
+  + registerForEvent(eventId: long): Registration
+  + joinClub(clubId: long): void
+  + submitFeedback(eventId: long, feedback: Feedback): void
+}
+class Organizer {
+  - designation: String
+  + createEvent(event: Event): Event
+  + cancelEvent(eventId: long): void
+  + postAnnouncement(a: Announcement): void
+}
+class Faculty {
+  - employeeId: String
+  - designation: String
+  + approveEvent(eventId: long): void
+  + rejectEvent(eventId: long, reason: String): void
+}
+class Admin {
+  - adminLevel: int
+  + manageUsers(): void
+  + viewReports(): Map
+  + configureSystem(): void
+}
+User <|-- Student
+User <|-- Organizer
+User <|-- Faculty
+User <|-- Admin
+class Event {
+  - id: long
+  - title: String
+  - description: String
+  - venue: String
+  - startTime: LocalDateTime
+  - endTime: LocalDateTime
+  - capacity: int
+  - status: EventStatus
+  + getAvailableSlots(): int
+  + isFull(): boolean
+}
+enum EventStatus { PENDING_APPROVAL; APPROVED; REJECTED; CANCELLED }
+class Registration {
+  - id: long
+  - registeredAt: LocalDateTime
+  - status: RegistrationStatus
+  - ticketNo: String
+}
+class Club
+class ClubMembership
+class Announcement
+class Notification
+class Feedback {
+  - rating: int
+  - comments: String
+  - submittedAt: LocalDateTime
+  + validateRating(): boolean
+}
+class EventService
+class RegistrationService
+class EventDAO
+class RegistrationDAO
+interface Notifiable
+interface Schedulable
+User "1" -- "0..*" Event : creates (Organizer)
+Event "1" -- "0..*" Registration
+Student "1" -- "0..*" Registration
+Student "1" -- "0..*" Feedback
+Event "1" -- "0..*" Feedback
+Student "1" -- "0..*" ClubMembership
+Club "1" -- "0..*" ClubMembership
+Announcement "1" -- "0..*" Notification
+EventService --> EventDAO
+RegistrationService --> EventDAO
+RegistrationService --> RegistrationDAO
+@enduml

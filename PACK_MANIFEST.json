@@ -1,0 +1,281 @@
+{
+  "name": "OOPS Project Team Handoff Pack v2",
+  "based_on": "Updated UML and team-specified Java/JDBC/Spring Boot/Gradle/MySQL/Swing/JWT stack",
+  "stack_baseline": {
+    "java": "21",
+    "spring_boot": "3.5.16",
+    "gradle_wrapper": "8.14.3",
+    "database": "MySQL 8.4 LTS",
+    "jdbc": "Spring JDBC JdbcTemplate",
+    "frontend": "Java Swing",
+    "auth": "Spring Security + JWT/Nimbus"
+  },
+  "member_handoffs": 9,
+  "files": [
+    {
+      "path": ".gitignore",
+      "bytes": 170,
+      "sha256": "4006c40f27c58ec7371de53181b8bd94ddd9c95fd10d56d8e80e72c47dac1281"
+    },
+    {
+      "path": "HANDOFF.md",
+      "bytes": 4190,
+      "sha256": "0409a1450ee16b2a343928f14e0d401bdc45d85acffb353bf2fdbffcaa24a4c7"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2809,
+      "sha256": "359b9df0e0996b0eb5359e5604dc6317fcde8f5d7a8b54261cc9e6d1453b0162"
+    },
+    {
+      "path": "backend/.env.example",
+      "bytes": 324,
+      "sha256": "134f5bca0412fc1170528233148b9f4110f246ce3fd7ae2b3b024d5b6796e8c4"
+    },
+    {
+      "path": "backend/application.properties.example",
+      "bytes": 768,
+      "sha256": "402fe44c62e42ce4715656cc53c426163c4cd84d96fc7c1ae34a2077d8590793"
+    },
+    {
+      "path": "backend/build.gradle.kts",
+      "bytes": 951,
+      "sha256": "fa4859fb5e5065870651059163d8b7b5e83f8c246b9a14d51f8fa74b41c19784"
+    },
+    {
+      "path": "backend/src/main/java/edu/mec/studentportal/StudentPortalApplication.java",
+      "bytes": 392,
+      "sha256": "663b974f099cdcb6b248b2a0425d41984e597fc2b58472e19787452a5e07ca7c"
+    },
+    {
+      "path": "backend/src/main/java/edu/mec/studentportal/config/BootstrapSecurityConfig.java",
+      "bytes": 975,
+      "sha256": "426416f1c50a1ba682999bd2ab378db3c09e0a60e7e940343556df61f938b7c5"
+    },
+    {
+      "path": "backend/src/main/java/edu/mec/studentportal/health/HealthController.java",
+      "bytes": 509,
+      "sha256": "a0b1491b8f6d163982dee52ee18b72f802c6043e6115f543615212347d6c7165"
+    },
+    {
+      "path": "backend/src/main/resources/application.properties",
+      "bytes": 599,
+      "sha256": "c633a0b954a6068d1c12fd254057f891d4e5d57c80debcea310ac7a58b71ed22"
+    },
+    {
+      "path": "backend/src/main/resources/db/migration/V1__initial_schema.sql",
+      "bytes": 8819,
+      "sha256": "b31d77e8bac5eadb11a82925aa0609ac4d9033d4b339db62a987971b075007e5"
+    },
+    {
+      "path": "build.gradle.kts",
+      "bytes": 230,
+      "sha256": "7d8ec0e085bbc0027648ec97edd9f43fe1860994843fbf4e26f42ea32c93b365"
+    },
+    {
+      "path": "client/build.gradle.kts",
+      "bytes": 584,
+      "sha256": "416b67b80f0cd08d3d2d72220f6ca8a168c1d3eb28896e45737d180355d57db8"
+    },
+    {
+      "path": "client/client-config.example.properties",
+      "bytes": 173,
+      "sha256": "1e3c3777fa3f0198053415d824671dc8dbecc2e086ea67394ce3fad59a7a93f0"
+    },
+    {
+      "path": "client/src/main/java/edu/mec/studentportal/client/ClientApplication.java",
+      "bytes": 941,
+      "sha256": "52fe06dd8aa133bcc3b78037a467607ed4beea732cfe65b010d0dbbef58fd53c"
+    },
+    {
+      "path": "database/ERD.md",
+      "bytes": 897,
+      "sha256": "f1430707033cd685e1305144cd9c3bb68f4ea1e49aacb567e5d27bbdc04137e4"
+    },
+    {
+      "path": "database/create_database.sql",
+      "bytes": 97,
+      "sha256": "1e1416abbdcbb9414a72630c3d739fa2858b129fea396ba28e3694a62cff07a3"
+    },
+    {
+      "path": "diagrams/architecture.mmd",
+      "bytes": 298,
+      "sha256": "bb9ecfc8c726bce2491b0d655b15d69072141b89e0f8fba45fd7290e57c8d1c7"
+    },
+    {
+      "path": "diagrams/class-outline.puml",
+      "bytes": 2022,
+      "sha256": "f9619f3d5e695447c656b2674b82e59f97edc63bef77385dac97d52564647e08"
+    },
+    {
+      "path": "diagrams/registration-sequence.mmd",
+      "bytes": 1015,
+      "sha256": "6a8bed4649e37e8babb909f5a055bb686ab274759ceec8c3ab5b90f2adf16767"
+    },
+    {
+      "path": "docs/AI_AGENT_PROMPT.md",
+      "bytes": 2701,
+      "sha256": "7e90ba05b68a9337bb399a626a4cee73b8b07d3de78180897a52b50a0921ee92"
+    },
+    {
+      "path": "docs/API_CONTRACT.md",
+      "bytes": 8188,
+      "sha256": "3df4f43aa4e60d698afd3d1861a5c99ea2fd2f4354d549a4172c800a344c6107"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "bytes": 5527,
+      "sha256": "27bf47cd2d9e0abe9ffccbe049fe04196fe9ce26d89bb5ff448ae2fa37aca644"
+    },
+    {
+      "path": "docs/AUTH_AND_SECURITY.md",
+      "bytes": 3188,
+      "sha256": "8cb7c5fdc15602e90697e75d3d7a2b3862689e1fecac1bc6f79efd74bf924524"
+    },
+    {
+      "path": "docs/BUILD_BASELINE.md",
+      "bytes": 2486,
+      "sha256": "8fb8311a3328fdbeebb404726626d65be4b2bb17689f98fda3c94f0b25fed105"
+    },
+    {
+      "path": "docs/BUILD_COMMANDS.md",
+      "bytes": 899,
+      "sha256": "e97765a59ff10786b7e22b22616dd8454b3565efa48c063b8efe30b30fa36d18"
+    },
+    {
+      "path": "docs/CODING_STANDARDS.md",
+      "bytes": 2510,
+      "sha256": "dbe2df8cf05eb90cdc37c9d9bfa29e54cc58944bff6c8ecb741eb06da562ae40"
+    },
+    {
+      "path": "docs/DATA_MODEL.md",
+      "bytes": 4634,
+      "sha256": "652ed356a7b545c24bf44dc26fb11f2554d95ffcef33891ad162d8eb81b3ddc6"
+    },
+    {
+      "path": "docs/DECISION_LOG.md",
+      "bytes": 1896,
+      "sha256": "495c68f1f0f9e0c73c24c525d2f0bd1a057cd2e5f671713f8a8990259b86fdc7"
+    },
+    {
+      "path": "docs/DEFINITION_OF_DONE.md",
+      "bytes": 844,
+      "sha256": "c98cafaaf9de4956ebe555f22a68491ffda849d2998b6b46248ac5447efd7c90"
+    },
+    {
+      "path": "docs/DEVELOPMENT_TIMELINE.md",
+      "bytes": 1893,
+      "sha256": "5fa1a0ac89ecd60180ebf93f640011355165a2118c2e954c13f202d8218add40"
+    },
+    {
+      "path": "docs/GIT_WORKFLOW.md",
+      "bytes": 1885,
+      "sha256": "2b8204eea4d218356045964d91a5c57be1d25937b3b5d1bee60bd4269f15afae"
+    },
+    {
+      "path": "docs/LOCAL_DEVELOPMENT.md",
+      "bytes": 2893,
+      "sha256": "a73d53a96e4d28ad9709eb6c31fe24bd432afe38faf5a2b9543ba4e9b26ec050"
+    },
+    {
+      "path": "docs/MEMBER_STATUS_TEMPLATE.md",
+      "bytes": 281,
+      "sha256": "bcbcbf70f1d853789ed8c73d47b520947052bf3dcfd0a372fe84a42e23b95b04"
+    },
+    {
+      "path": "docs/PROJECT_SPEC.md",
+      "bytes": 4839,
+      "sha256": "968ab0bcc37b8e1f6a77318376091f202308caa297afc362d76e66fcf13b2568"
+    },
+    {
+      "path": "docs/PR_TEMPLATE.md",
+      "bytes": 449,
+      "sha256": "560b2afc4abdfbe951ce2deed2b3a3fa981b1a8aa63a091b2f80d37c7036abce"
+    },
+    {
+      "path": "docs/SHARED_CONTRACT_CHANGE.md",
+      "bytes": 1102,
+      "sha256": "1532931055e0ae4f286da98a986765083fe98c919ecae228152ab5cc83091539"
+    },
+    {
+      "path": "docs/STACK_AND_DECISIONS.md",
+      "bytes": 3470,
+      "sha256": "5eabc1860c01d4dd9eb462ed13c140dc8016549713e93365f252a8fccb225826"
+    },
+    {
+      "path": "docs/SWING_CLIENT_CONTRACT.md",
+      "bytes": 1709,
+      "sha256": "0dfabf24a5dd7d30019c9a348b4b923c8dc08734116a3eb52ca0305d14701f0d"
+    },
+    {
+      "path": "docs/TEAM_OWNERSHIP.md",
+      "bytes": 2540,
+      "sha256": "5eb5029e6b9b789b8dbf110c87bf9d1e7104e1ba72ae183edeb33b05fb37abba"
+    },
+    {
+      "path": "docs/TEST_PLAN.md",
+      "bytes": 3626,
+      "sha256": "d9323064666dad34138841fe80630610be6317d6bc7bf19aef0d2bc25488e79d"
+    },
+    {
+      "path": "docs/UML_CORRECTIONS.md",
+      "bytes": 4400,
+      "sha256": "0141c6ccc901c54bfacee3a60da4360d9c1ee9d34d018f4c11072faea66685aa"
+    },
+    {
+      "path": "gradle.properties",
+      "bytes": 97,
+      "sha256": "c53e30f06da02e587a81c4286277395eee892fe1217c6c45d4b386da9a63de7f"
+    },
+    {
+      "path": "member-handoffs/MEMBER-01.md",
+      "bytes": 1513,
+      "sha256": "cf9e459488f6c0d0f076f133fdfce412e592eb204c52f0bb222437fcfd2e18bf"
+    },
+    {
+      "path": "member-handoffs/MEMBER-02.md",
+      "bytes": 1886,
+      "sha256": "7fbcb43bb8595ae0731542ce29378a96fe22f0f865630cfc60059b4515fbd71f"
+    },
+    {
+      "path": "member-handoffs/MEMBER-03.md",
+      "bytes": 1813,
+      "sha256": "588ac78159ff680a8c1268ca1b1b560e895ff879a715a52042fcafb72465b6d3"
+    },
+    {
+      "path": "member-handoffs/MEMBER-04.md",
+      "bytes": 2068,
+      "sha256": "6757186df7fd59435978abeac93fe148baf7bc5cea6cc06f1972e673a2b9beaf"
+    },
+    {
+      "path": "member-handoffs/MEMBER-05.md",
+      "bytes": 1086,
+      "sha256": "d4d33a49a5220074b95ea628137fb015dbb6c057e1f87c34eaa8e582be36630c"
+    },
+    {
+      "path": "member-handoffs/MEMBER-06.md",
+      "bytes": 1856,
+      "sha256": "0398aecbbf8f129d9e1019d2cc70761063d3870f5bc30fd8e22a182daba64358"
+    },
+    {
+      "path": "member-handoffs/MEMBER-07.md",
+      "bytes": 1899,
+      "sha256": "eeb5d5da37c9e9fb0ccbeafda5c63b9893f58e0b653d2027ed0ddcd36a169d91"
+    },
+    {
+      "path": "member-handoffs/MEMBER-08.md",
+      "bytes": 1763,
+      "sha256": "c828a8a7ebd708ee80c5d1f5b2f8f2c0a6038863113e9b2a411ac0a8f8b5004e"
+    },
+    {
+      "path": "member-handoffs/MEMBER-09.md",
+      "bytes": 1690,
+      "sha256": "2c6ea6d3ccdf2f655ae13eb2cdd0ec6f73d9dfcc0aa3e0bbb6048112f0d967a0"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "bytes": 313,
+      "sha256": "a585b97c762906e7d38c3e72a791ec41480295d849435a8defb48873edce501b"
+    }
+  ]
+}
