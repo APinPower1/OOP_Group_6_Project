@@ -20,14 +20,20 @@ import edu.mec.studentportal.health.HealthController;
 import edu.mec.studentportal.security.JwtTokenService;
 import edu.mec.studentportal.user.Role;
 import edu.mec.studentportal.user.UserAccountLookup;
+import edu.mec.studentportal.user.UserSecurityState;
+import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -139,6 +145,109 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.status").value("UP"));
     }
 
+    @Test
+    void meRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/auth/me"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.timestamp").exists())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+            .andExpect(jsonPath("$.message").value(
+                "Authentication is required."
+            ))
+            .andExpect(jsonPath("$.path").value("/api/auth/me"));
+
+        verifyNoInteractions(
+            authService,
+            jwtTokenService,
+            userAccountLookup
+        );
+    }
+
+    @Test
+    void meReturnsCurrentUserSummaryForAuthenticatedUser() throws Exception {
+        when(jwtTokenService.decodeToken("valid-token"))
+            .thenReturn(token(41L, Role.ADMIN));
+        when(userAccountLookup.findSecurityStateById(41L))
+            .thenReturn(Optional.of(
+                new UserSecurityState(41L, Role.FACULTY, true)
+            ));
+        when(authService.getCurrentUser(41L)).thenReturn(
+            new UserSummaryResponse(
+                41L,
+                "Demo Faculty",
+                "faculty@example.edu",
+                Role.FACULTY
+            )
+        );
+
+        mockMvc.perform(get("/api/auth/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(
+                MediaType.APPLICATION_JSON
+            ))
+            .andExpect(jsonPath("$.id").value(41))
+            .andExpect(jsonPath("$.fullName").value("Demo Faculty"))
+            .andExpect(jsonPath("$.email").value("faculty@example.edu"))
+            .andExpect(jsonPath("$.role").value("FACULTY"))
+            .andExpect(jsonPath("$.passwordHash").doesNotExist())
+            .andExpect(content().string(not(containsString("passwordHash"))));
+
+        verify(authService).getCurrentUser(41L);
+    }
+
+    @Test
+    void meRejectsDisabledAccount() throws Exception {
+        when(jwtTokenService.decodeToken("valid-token"))
+            .thenReturn(token(41L, Role.STUDENT));
+        when(userAccountLookup.findSecurityStateById(41L))
+            .thenReturn(Optional.of(
+                new UserSecurityState(41L, Role.STUDENT, false)
+            ));
+
+        mockMvc.perform(get("/api/auth/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+            .andExpect(jsonPath("$.path").value("/api/auth/me"));
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void meRejectsDeletedAccount() throws Exception {
+        when(jwtTokenService.decodeToken("valid-token"))
+            .thenReturn(token(41L, Role.STUDENT));
+        when(userAccountLookup.findSecurityStateById(41L))
+            .thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/auth/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+            .andExpect(jsonPath("$.path").value("/api/auth/me"));
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void meRejectsInvalidOrExpiredToken() throws Exception {
+        when(jwtTokenService.decodeToken("bad-token"))
+            .thenThrow(new JwtException("invalid token"));
+
+        mockMvc.perform(get("/api/auth/me")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer bad-token"))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.status").value(401))
+            .andExpect(jsonPath("$.code").value("UNAUTHENTICATED"))
+            .andExpect(jsonPath("$.path").value("/api/auth/me"));
+
+        verifyNoInteractions(authService, userAccountLookup);
+    }
+
     private static LoginResponse successfulResponse() {
         return LoginResponse.bearer(
             "signed-token",
@@ -150,5 +259,16 @@ class AuthControllerTest {
                 Role.STUDENT
             )
         );
+    }
+
+    private static Jwt token(long userId, Role role) {
+        Instant issuedAt = Instant.now();
+        return Jwt.withTokenValue("valid-token")
+            .header("alg", "HS256")
+            .subject(Long.toString(userId))
+            .claim("role", role.name())
+            .issuedAt(issuedAt)
+            .expiresAt(issuedAt.plusSeconds(60))
+            .build();
     }
 }

@@ -35,6 +35,8 @@ class AuthServiceTest {
     private static final String ACCESS_TOKEN = "signed-token";
     private static final String INVALID_CREDENTIALS_MESSAGE =
         "Invalid email or password.";
+    private static final String AUTHENTICATION_REQUIRED_MESSAGE =
+        "Authentication is required.";
 
     @Mock
     private UserAccountLookup userAccountLookup;
@@ -187,6 +189,78 @@ class AuthServiceTest {
     }
 
     @Test
+    void returnsCurrentUserSummaryFromCurrentDatabaseAccount() {
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account(true, Role.FACULTY)));
+
+        UserSummaryResponse response = authService.getCurrentUser(USER_ID);
+
+        assertThat(response).isEqualTo(
+            new UserSummaryResponse(
+                USER_ID,
+                "Demo Student",
+                EMAIL,
+                Role.FACULTY
+            )
+        );
+        verify(userAccountLookup).findById(USER_ID);
+        verifyNoInteractions(passwordEncoder, jwtTokenService);
+    }
+
+    @Test
+    void rejectsMissingCurrentUserWithAuthenticationRequired() {
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.empty());
+
+        assertAuthenticationRequired(catchThrowable(
+            () -> authService.getCurrentUser(USER_ID)
+        ));
+
+        verifyNoInteractions(passwordEncoder, jwtTokenService);
+    }
+
+    @Test
+    void rejectsDisabledCurrentUserWithAuthenticationRequired() {
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account(false, Role.STUDENT)));
+
+        assertAuthenticationRequired(catchThrowable(
+            () -> authService.getCurrentUser(USER_ID)
+        ));
+
+        verifyNoInteractions(passwordEncoder, jwtTokenService);
+    }
+
+    @Test
+    void rejectsNonPositiveCurrentUserIdWithoutLookup() {
+        assertAuthenticationRequired(catchThrowable(
+            () -> authService.getCurrentUser(0L)
+        ));
+        assertAuthenticationRequired(catchThrowable(
+            () -> authService.getCurrentUser(-1L)
+        ));
+
+        verifyNoInteractions(
+            userAccountLookup,
+            passwordEncoder,
+            jwtTokenService
+        );
+    }
+
+    @Test
+    void currentUserResponseDoesNotContainPasswordHash() throws Exception {
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account(true, Role.STUDENT)));
+
+        String json = new ObjectMapper().writeValueAsString(
+            authService.getCurrentUser(USER_ID)
+        );
+
+        assertThat(json)
+            .doesNotContain(PASSWORD_HASH, "passwordHash");
+    }
+
+    @Test
     void responseDoesNotContainPasswordHash() throws Exception {
         stubSuccessfulLogin(account(true, Role.STUDENT), Role.STUDENT);
 
@@ -252,6 +326,19 @@ class AuthServiceTest {
         );
         assertThat(exception.getMessage()).isEqualTo(
             INVALID_CREDENTIALS_MESSAGE
+        );
+    }
+
+    private static void assertAuthenticationRequired(Throwable thrown) {
+        assertThat(thrown).isInstanceOf(ApiException.class);
+
+        ApiException exception = (ApiException) thrown;
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(exception.getCode()).isEqualTo(
+            ApiErrorCodes.UNAUTHENTICATED
+        );
+        assertThat(exception.getMessage()).isEqualTo(
+            AUTHENTICATION_REQUIRED_MESSAGE
         );
     }
 }

@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     private static final String INVALID_CREDENTIALS_MESSAGE =
         "Invalid email or password.";
+    private static final String AUTHENTICATION_REQUIRED_MESSAGE =
+        "Authentication is required.";
 
     private final UserAccountLookup userAccountLookup;
     private final PasswordEncoder passwordEncoder;
@@ -64,11 +66,39 @@ public class AuthService {
         );
     }
 
+    public UserSummaryResponse getCurrentUser(long userId) {
+        if (userId <= 0) {
+            throw authenticationRequired();
+        }
+
+        UserAccount account = userAccountLookup.findById(userId)
+            .orElseThrow(AuthService::authenticationRequired);
+
+        if (!account.enabled()) {
+            throw authenticationRequired();
+        }
+
+        return new UserSummaryResponse(
+            account.id(),
+            account.fullName(),
+            account.email(),
+            account.role()
+        );
+    }
+
     private static ApiException invalidCredentials() {
         return new ApiException(
             HttpStatus.UNAUTHORIZED,
             ApiErrorCodes.UNAUTHENTICATED,
             INVALID_CREDENTIALS_MESSAGE
+        );
+    }
+
+    private static ApiException authenticationRequired() {
+        return new ApiException(
+            HttpStatus.UNAUTHORIZED,
+            ApiErrorCodes.UNAUTHENTICATED,
+            AUTHENTICATION_REQUIRED_MESSAGE
         );
     }
 }
