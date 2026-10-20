@@ -17,7 +17,9 @@ import edu.mec.studentportal.api.ApiErrorResponseWriter;
 import edu.mec.studentportal.api.ApiException;
 import edu.mec.studentportal.config.BootstrapSecurityConfig;
 import edu.mec.studentportal.health.HealthController;
+import edu.mec.studentportal.security.JwtTokenService;
 import edu.mec.studentportal.user.Role;
+import edu.mec.studentportal.user.UserAccountLookup;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -41,6 +43,12 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    @MockitoBean
+    private JwtTokenService jwtTokenService;
+
+    @MockitoBean
+    private UserAccountLookup userAccountLookup;
 
     @Test
     void loginIsPublicAndReturnsTokenAndUserSummary() throws Exception {
