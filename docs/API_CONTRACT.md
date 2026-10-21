@@ -147,6 +147,159 @@ Notification response objects include `id`, `notificationType`, `title`, `messag
 
 Feedback request: `{ "rating": 5, "comments": "Well organized." }`. Server sets `studentId` and `submittedAt`; client must not send them.
 
+## Admin user management
+
+The `/api/admin/users` endpoints listed in the Feedback and reports table require the `ADMIN` role. All failures use the shared error body and codes from "Common conventions". Password hashes and internal authentication details are never returned.
+
+### User representation
+
+```json
+{
+  "id": 43,
+  "fullName": "Dr. Meera Rao",
+  "email": "meera.rao@example.edu",
+  "department": "Computer Science",
+  "role": "FACULTY",
+  "enabled": true,
+  "profile": {
+    "employeeId": "E1001",
+    "designation": "Professor"
+  }
+}
+```
+
+`profile` is a nested object whose fields depend on `role`:
+
+- `STUDENT`: `rollNumber` (maximum 40 characters), `semester` (minimum 1), `batch` (maximum 40 characters).
+- `ORGANIZER`: `designation` (maximum 100 characters).
+- `FACULTY`: `employeeId` (maximum 40 characters), `designation` (maximum 100 characters).
+- `ADMIN`: `adminLevel` (minimum 1; defaults to 1 when omitted).
+
+`fullName` is required and has a maximum of 120 characters. `email` is required, must be a valid email address, and has a maximum of 254 characters. `department` is required and has a maximum of 120 characters.
+
+### List users
+
+`GET /api/admin/users`
+
+Optional query parameters:
+
+- `page`: zero-based page index; default `0`; minimum `0`.
+- `size`: page size; default `20`; minimum `1`; maximum `100`.
+- `role`: one of `STUDENT`, `ORGANIZER`, `FACULTY`, `ADMIN`.
+- `enabled`: `true` or `false`.
+- `q`: case-insensitive substring search on `fullName` or `email`.
+
+Results are ordered by `id` ascending. A successful request returns `200 OK`:
+
+```json
+{
+  "items": [
+    {
+      "id": 41,
+      "fullName": "Ayesha Khan",
+      "email": "ayesha.khan@example.edu",
+      "department": "Computer Science",
+      "role": "STUDENT",
+      "enabled": true,
+      "profile": {
+        "rollNumber": "R2026001",
+        "semester": 3,
+        "batch": "2026"
+      }
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalItems": 1,
+  "totalPages": 1
+}
+```
+
+`totalPages` is `0` when `totalItems` is `0`. Invalid query parameters return `400 INVALID_REQUEST`.
+
+### Create user
+
+`POST /api/admin/users`
+
+Request:
+
+```json
+{
+  "fullName": "Ayesha Khan",
+  "email": "ayesha.khan@example.edu",
+  "password": "initial-password",
+  "department": "Computer Science",
+  "role": "STUDENT",
+  "profile": {
+    "rollNumber": "R2026001",
+    "semester": 3,
+    "batch": "2026"
+  }
+}
+```
+
+- `password` is required and must be 8–72 UTF-8 bytes. It is stored only as a BCrypt hash and is never returned.
+- New accounts are always enabled. `enabled` is not an accepted request property; a create request must not override it.
+- The `profile` object must contain only fields defined for `role`; fields required for the role must be present.
+- Unsupported JSON properties in a create request are rejected with `400 INVALID_REQUEST`.
+- A create request with a duplicate email or duplicate profile unique value returns `409 CONFLICT`.
+
+A successful request returns `201 Created` with the user representation.
+
+### Update user
+
+`PUT /api/admin/users/{userId}`
+
+The request is a full replacement of the editable account and profile fields:
+
+```json
+{
+  "fullName": "Ayesha Khan",
+  "email": "ayesha.khan@example.edu",
+  "department": "Computer Science",
+  "role": "ORGANIZER",
+  "profile": {
+    "designation": "Club Coordinator"
+  }
+}
+```
+
+- The editable fields are `fullName`, `email`, `department`, `role`, and `profile`.
+- `password` and `enabled` are not accepted. The existing password hash is preserved.
+- Unsupported JSON properties in an update request are rejected with `400 INVALID_REQUEST`.
+- The profile must contain only fields defined for the new `role`; fields required for the role must be present.
+- On a role change, the old role profile is removed and the new role profile is inserted in one transaction. When the role is unchanged, the existing profile is updated in place. Any failure rolls back the user and profile writes.
+- If the user is currently `STUDENT` and has any row in `registrations`, `club_members`, or `feedback`, a role change away from `STUDENT` is rejected with `409 CONFLICT`. This includes cancelled registrations and left memberships. No registration, membership, or feedback row is deleted or modified.
+- An administrator cannot change their own role away from `ADMIN`.
+- The last enabled administrator cannot be demoted.
+- A duplicate email or duplicate profile unique value returns `409 CONFLICT`.
+
+A successful request returns `200 OK` with the updated user representation.
+
+### Enable and disable
+
+`POST /api/admin/users/{userId}/disable`
+`POST /api/admin/users/{userId}/enable`
+
+A successful request returns `200 OK` with the updated user representation.
+
+- An administrator cannot disable their own account.
+- The last enabled administrator cannot be disabled.
+- The guardrail check and the account update occur in one transaction and are safe under concurrent administrator changes, including concurrent role changes.
+- Disabling an account takes effect for subsequent authenticated requests.
+
+### Admin user-management errors
+
+| Status | Code | Cases |
+|---|---|---|
+| `400 Bad Request` | `INVALID_REQUEST` | Invalid body, invalid query parameter, unsupported JSON property, profile/role mismatch, or password outside 8–72 UTF-8 bytes. |
+| `401 Unauthorized` | `UNAUTHENTICATED` | Missing, malformed, expired, or invalid token. |
+| `403 Forbidden` | `FORBIDDEN` | Authenticated user is not an administrator. |
+| `404 Not Found` | `NOT_FOUND` | `userId` does not identify an existing user. |
+| `409 Conflict` | `CONFLICT` | Duplicate email or profile unique value; self-disable; self-demotion; disabling or demoting the last enabled administrator; role change away from `STUDENT` with existing student history. |
+
+No user `DELETE` endpoint exists. No password-management endpoint is introduced by this contract. Password changes are outside general user updates.
+
 ## DTO boundaries
 
 - Never serialize password hash, secret, full JWT claims or internal database exceptions.
