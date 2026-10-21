@@ -1,7 +1,5 @@
 package edu.mec.studentportal.registration;
 
-import edu.mec.studentportal.api.ApiErrorCodes;
-import edu.mec.studentportal.api.ApiException;
 import edu.mec.studentportal.common.CurrentUser;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -58,5 +56,4 @@ public class RegistrationController {
     ) {
         return registrationService.roster(eventId, CurrentUser.id(authentication));
     }
-
 }

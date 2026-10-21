@@ -1,4 +1,4 @@
-package edu.mec.studentportal.registration;
+package edu.mec.studentportal.event;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,18 +18,17 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Test-only stand-in for Member 2's JWT filter so MockMvc can exercise the registration
+ * Test-only stand-in for Member 2's JWT filter so MockMvc can exercise the event
  * endpoints before the auth module is merged. Requests carry {@code X-Test-Auth: <userId>}
- * and are authenticated with that user id as principal name (ROLE_STUDENT authority).
- * This class lives in test sources only and never ships in the application.
+ * and are authenticated with that user id as principal name.
  */
 @TestConfiguration
-public class RegistrationTestSecurityConfig {
+public class EventTestSecurityConfig {
     static final String TEST_AUTH_HEADER = "X-Test-Auth";
 
     @Bean
     @Order(0)
-    SecurityFilterChain registrationTestSecurityFilterChain(HttpSecurity http) throws Exception {
+    SecurityFilterChain eventTestSecurityFilterChain(HttpSecurity http) throws Exception {
         http
             .securityMatcher("/**")
             .csrf(csrf -> csrf.disable())

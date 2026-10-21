@@ -102,6 +102,30 @@ public abstract class DatabaseIntegrationTestSupport {
         return createUser("ADMIN");
     }
 
+    protected long createApprovedEvent(long organizerId, int capacity) {
+        return createEvent(organizerId, "APPROVED", now().plusHours(2), capacity);
+    }
+
+    protected long createEndedEvent(long organizerId, int capacity) {
+        return createEvent(organizerId, "APPROVED", now().minusHours(4), capacity);
+    }
+
+    protected long createEvent(long organizerId, String status, LocalDateTime startTime, int capacity) {
+        long id = uniqueIds.incrementAndGet();
+        jdbcTemplate.update(
+            "INSERT INTO events (id, title, description, venue, start_time, end_time, capacity, status, created_by) "
+                + "VALUES (?, ?, 'desc', 'Auditorium A', ?, ?, ?, ?, ?)",
+            id,
+            "Event " + id,
+            Timestamp.valueOf(startTime),
+            Timestamp.valueOf(startTime.plusHours(3)),
+            capacity,
+            status,
+            organizerId
+        );
+        return id;
+    }
+
     protected long insertClub(String name, String category, boolean active) {
         long id = uniqueIds.incrementAndGet();
         jdbcTemplate.update(
@@ -110,6 +134,21 @@ public abstract class DatabaseIntegrationTestSupport {
             name,
             category,
             active
+        );
+        return id;
+    }
+
+    protected long insertRegistration(long studentId, long eventId, String status) {
+        long id = uniqueIds.incrementAndGet();
+        jdbcTemplate.update(
+            "INSERT INTO registrations (id, student_id, event_id, registered_at, status, ticket_no) "
+                + "VALUES (?, ?, ?, ?, ?, ?)",
+            id,
+            studentId,
+            eventId,
+            Timestamp.valueOf(now()),
+            status,
+            "TEST-" + eventId + "-" + studentId + "-" + id
         );
         return id;
     }

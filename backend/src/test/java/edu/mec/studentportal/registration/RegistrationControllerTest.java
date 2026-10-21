@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import edu.mec.studentportal.testsupport.TestAuthSecurityConfig;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -41,7 +42,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         long event = createApprovedEvent(createOrganizer(), 5);
 
         mockMvc.perform(post("/api/events/{eventId}/registrations", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, student)
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, student)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.eventId").value(event))
@@ -60,7 +61,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         registrationService.register(event, student);
 
         mockMvc.perform(post("/api/events/{eventId}/registrations", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, student)
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, student)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("DUPLICATE_REGISTRATION"))
@@ -75,7 +76,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         registrationService.register(event, first);
 
         mockMvc.perform(post("/api/events/{eventId}/registrations", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, second)
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, second)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("EVENT_FULL"));
@@ -90,7 +91,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         registrationService.register(event, studentB);
 
         mockMvc.perform(delete("/api/events/{eventId}/registrations/me", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, studentB))
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, studentB))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status").value("CANCELLED"))
             .andExpect(jsonPath("$.registeredCount").value(1));
@@ -99,7 +100,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         assertThat(statusOf(studentB, event)).isEqualTo(RegistrationStatus.CANCELLED);
 
         mockMvc.perform(delete("/api/events/{eventId}/registrations/me", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, studentB))
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, studentB))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value("REGISTRATION_ALREADY_CANCELLED"));
     }
@@ -114,7 +115,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         registrationService.cancel(eventB, student);
 
         String body = mockMvc.perform(get("/api/registrations/me")
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, student))
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, student))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2))
             .andReturn().getResponse().getContentAsString();
@@ -136,7 +137,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         registrationService.register(event, attendee);
 
         mockMvc.perform(get("/api/events/{eventId}/registrations", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, owner))
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, owner))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.capacity").value(5))
             .andExpect(jsonPath("$.registeredCount").value(1))
@@ -146,7 +147,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
             .andExpect(jsonPath("$.registrations[0].fullName").isString());
 
         mockMvc.perform(get("/api/events/{eventId}/registrations", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, student))
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, student))
             .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value("FORBIDDEN"));
     }
@@ -157,7 +158,7 @@ class RegistrationControllerTest extends RegistrationIntegrationTestSupport {
         long event = createEvent(createOrganizer(), "PENDING_APPROVAL", now().plusHours(1), 5);
 
         mockMvc.perform(post("/api/events/{eventId}/registrations", event)
-                .header(RegistrationTestSecurityConfig.TEST_AUTH_HEADER, student)
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, student)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.timestamp").exists())
