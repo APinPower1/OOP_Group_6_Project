@@ -1,0 +1,52 @@
+package edu.mec.studentportal.user;
+
+/** Validated, normalized values for replacing one account and its role profile. */
+public record AdminUserUpdateCommand(
+    String fullName,
+    String email,
+    String department,
+    Role role,
+    UserProfile profile
+) {
+    public AdminUserUpdateCommand {
+        if (fullName == null) {
+            throw new IllegalArgumentException("fullName must not be null");
+        }
+        if (email == null) {
+            throw new IllegalArgumentException("email must not be null");
+        }
+        if (department == null) {
+            throw new IllegalArgumentException("department must not be null");
+        }
+        if (role == null) {
+            throw new IllegalArgumentException("role must not be null");
+        }
+        if (profile == null) {
+            throw new IllegalArgumentException("profile must not be null");
+        }
+    }
+
+    static AdminUserUpdateCommand from(AdminUserUpdateRequest request) {
+        if (request == null) {
+            throw AdminUserValidation.invalid("A request body is required.");
+        }
+        return new AdminUserUpdateCommand(
+            AdminUserValidation.requireText(
+                request.fullName(),
+                "fullName",
+                AdminUserValidation.MAX_FULL_NAME_LENGTH
+            ),
+            AdminUserValidation.requireEmail(request.email()),
+            AdminUserValidation.requireText(
+                request.department(),
+                "department",
+                AdminUserValidation.MAX_DEPARTMENT_LENGTH
+            ),
+            request.role(),
+            AdminUserValidation.parseProfile(
+                request.role(),
+                request.profile()
+            )
+        );
+    }
+}

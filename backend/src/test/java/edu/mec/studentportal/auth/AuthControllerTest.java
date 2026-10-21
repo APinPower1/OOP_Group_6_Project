@@ -85,6 +85,29 @@ class AuthControllerTest {
     }
 
     @Test
+    void loginIgnoresUnsupportedJsonProperties() throws Exception {
+        when(authService.login(
+            new LoginRequest("student@example.edu", "demo-password")
+        )).thenReturn(successfulResponse());
+
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "email": "student@example.edu",
+                      "password": "demo-password",
+                      "rememberMe": true
+                    }
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.accessToken").value("signed-token"));
+
+        verify(authService).login(
+            new LoginRequest("student@example.edu", "demo-password")
+        );
+    }
+
+    @Test
     void invalidCredentialsReturnUnauthenticatedError() throws Exception {
         when(authService.login(any(LoginRequest.class))).thenThrow(
             new ApiException(

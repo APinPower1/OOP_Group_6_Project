@@ -1,6 +1,6 @@
 package edu.mec.studentportal.user;
 
-public final class AdminProfile {
+public final class AdminProfile implements UserProfile {
     private final int adminLevel;
 
     public AdminProfile() {

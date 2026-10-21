@@ -1,6 +1,6 @@
 package edu.mec.studentportal.user;
 
-public final class StudentProfile {
+public final class StudentProfile implements UserProfile {
     private final String rollNumber;
     private final int semester;
     private final String batch;

@@ -1,6 +1,6 @@
 package edu.mec.studentportal.user;
 
-public final class FacultyProfile {
+public final class FacultyProfile implements UserProfile {
     private final String employeeId;
     private final String designation;
 

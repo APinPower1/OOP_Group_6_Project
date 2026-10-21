@@ -1,6 +1,6 @@
 package edu.mec.studentportal.user;
 
-public final class OrganizerProfile {
+public final class OrganizerProfile implements UserProfile {
     private final String designation;
 
     public OrganizerProfile(String designation) {
