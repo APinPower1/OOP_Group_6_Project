@@ -1,7 +1,6 @@
 package edu.mec.studentportal.registration;
 
-import edu.mec.studentportal.api.ApiErrorCodes;
-import edu.mec.studentportal.api.ApiException;
+import edu.mec.studentportal.common.CurrentUser;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +32,7 @@ public class RegistrationController {
         @PathVariable long eventId,
         Authentication authentication
     ) {
-        RegistrationResponse response = registrationService.register(eventId, currentUserId(authentication));
+        RegistrationResponse response = registrationService.register(eventId, CurrentUser.id(authentication));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -42,12 +41,12 @@ public class RegistrationController {
         @PathVariable long eventId,
         Authentication authentication
     ) {
-        return registrationService.cancel(eventId, currentUserId(authentication));
+        return registrationService.cancel(eventId, CurrentUser.id(authentication));
     }
 
     @GetMapping("/api/registrations/me")
     public List<RegistrationResponse> listOwn(Authentication authentication) {
-        return registrationService.listMine(currentUserId(authentication));
+        return registrationService.listMine(CurrentUser.id(authentication));
     }
 
     @GetMapping("/api/events/{eventId}/registrations")
@@ -55,26 +54,11 @@ public class RegistrationController {
         @PathVariable long eventId,
         Authentication authentication
     ) {
-        return registrationService.roster(eventId, currentUserId(authentication));
+        return registrationService.roster(eventId, CurrentUser.id(authentication));
     }
 
     /** Resolves the server-side user id from the security principal (Member 2's JWT subject). */
     public static long currentUserId(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ApiException(
-                HttpStatus.UNAUTHORIZED,
-                ApiErrorCodes.UNAUTHENTICATED,
-                "Authentication is required."
-            );
-        }
-        try {
-            return Long.parseLong(authentication.getName());
-        } catch (NumberFormatException exception) {
-            throw new ApiException(
-                HttpStatus.UNAUTHORIZED,
-                ApiErrorCodes.UNAUTHENTICATED,
-                "Authentication is required."
-            );
-        }
+        return CurrentUser.id(authentication);
     }
 }

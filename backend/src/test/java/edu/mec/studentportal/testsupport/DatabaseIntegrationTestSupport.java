@@ -46,6 +46,8 @@ public abstract class DatabaseIntegrationTestSupport {
         jdbcTemplate.update("DELETE FROM notifications");
         jdbcTemplate.update("DELETE FROM feedback");
         jdbcTemplate.update("DELETE FROM announcements");
+        jdbcTemplate.update("DELETE FROM club_members");
+        jdbcTemplate.update("DELETE FROM clubs");
         jdbcTemplate.update("DELETE FROM registrations");
         jdbcTemplate.update("DELETE FROM events");
         jdbcTemplate.update("DELETE FROM student_profiles");
@@ -124,6 +126,18 @@ public abstract class DatabaseIntegrationTestSupport {
         return id;
     }
 
+    protected long insertClub(String name, String category, boolean active) {
+        long id = uniqueIds.incrementAndGet();
+        jdbcTemplate.update(
+            "INSERT INTO clubs (id, name, description, category, is_active) VALUES (?, ?, 'desc', ?, ?)",
+            id,
+            name,
+            category,
+            active
+        );
+        return id;
+    }
+
     protected long insertRegistration(long studentId, long eventId, String status) {
         long id = uniqueIds.incrementAndGet();
         jdbcTemplate.update(
@@ -135,6 +149,19 @@ public abstract class DatabaseIntegrationTestSupport {
             Timestamp.valueOf(now()),
             status,
             "TEST-" + eventId + "-" + studentId + "-" + id
+        );
+        return id;
+    }
+
+    protected long insertMembership(long clubId, long studentId, String status) {
+        long id = uniqueIds.incrementAndGet();
+        jdbcTemplate.update(
+            "INSERT INTO club_members (id, club_id, student_id, joined_at, status) VALUES (?, ?, ?, ?, ?)",
+            id,
+            clubId,
+            studentId,
+            Timestamp.valueOf(now()),
+            status
         );
         return id;
     }
