@@ -17,7 +17,7 @@ This file uses the shared baseline in `docs/BUILD_BASELINE.md`: Java 21, Spring 
 3. Create a local MySQL database (example name `student_portal`).
 4. Run `database/create_database.sql` once to create the empty `student_portal` database.
 5. Start Spring Boot. Flyway applies `backend/src/main/resources/db/migration/V1__initial_schema.sql` automatically.
-6. Load only demo/test users through the seed script or documented setup; their passwords must be hashed through the application or a known test helper.
+6. Do not create demo accounts until the approved application seed helper or documented setup is available. Demo passwords must be BCrypt-hashed; never store plaintext passwords in SQL or commit credentials.
 7. Verify `GET http://localhost:8080/api/health` returns healthy status. The bootstrap security config deliberately denies all other API routes until Member 2 completes JWT security.
 8. Start the Swing client using `./gradlew :client:run`.
 9. Configure API base URL for the client, normally `http://localhost:8080/api` during local development.
@@ -43,3 +43,28 @@ Set backend and MySQL session/server timezone consistently with event-time handl
 - MySQL connection error: confirm server/database/username/password, DB URL, and that credentials remain backend-only.
 - `EVENT_FULL`: query the count of `CONFIRMED` registrations; do not manually adjust a stored event count.
 - Schema drift: use Flyway to apply committed migrations. Reset only a disposable local database; never drop shared/demo data without warning.
+
+## Database verification
+
+After starting the backend, verify that Flyway applied the expected migration:
+
+```sql
+USE student_portal;
+
+SELECT version, description, success
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+## Safe local database reset
+
+**Warning:** Resetting a database permanently deletes its data. Only reset a disposable local database that you own. Never reset a shared, production, or team demo database.
+
+Before resetting:
+1. Confirm the exact database name and ensure it contains no data you need.
+2. Stop applications and tests connected to that database.
+3. Back up any data you need to retain.
+4. Recreate the empty database using the approved local setup procedure.
+5. Restart the backend so Flyway can apply the committed migrations.
+
+Do not delete Flyway migration files or manually modify `flyway_schema_history` to resolve schema drift. Correct the underlying issue through the team's approved migration process.
