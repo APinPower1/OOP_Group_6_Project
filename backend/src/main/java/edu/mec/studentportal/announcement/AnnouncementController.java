@@ -1,6 +1,6 @@
 package edu.mec.studentportal.announcement;
 
-import edu.mec.studentportal.registration.RegistrationController;
+import edu.mec.studentportal.common.CurrentUser;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,13 +29,13 @@ public class AnnouncementController {
         Authentication authentication
     ) {
         AnnouncementService.PublishResult result =
-            announcementService.publish(request, RegistrationController.currentUserId(authentication));
+            announcementService.publish(request, CurrentUser.id(authentication));
         return ResponseEntity.status(HttpStatus.CREATED).body(result.announcement());
     }
 
     @GetMapping
     public List<AnnouncementResponse> list(Authentication authentication) {
-        return announcementService.listVisibleTo(RegistrationController.currentUserId(authentication));
+        return announcementService.listVisibleTo(CurrentUser.id(authentication));
     }
 
     @PostMapping("/{id}/archive")
@@ -43,6 +43,6 @@ public class AnnouncementController {
         @PathVariable long id,
         Authentication authentication
     ) {
-        return announcementService.archive(id, RegistrationController.currentUserId(authentication));
+        return announcementService.archive(id, CurrentUser.id(authentication));
     }
 }

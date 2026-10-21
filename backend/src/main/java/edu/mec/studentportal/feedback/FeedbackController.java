@@ -2,7 +2,7 @@ package edu.mec.studentportal.feedback;
 
 import edu.mec.studentportal.feedback.FeedbackResponses.FeedbackResponse;
 import edu.mec.studentportal.feedback.FeedbackResponses.FeedbackSummaryResponse;
-import edu.mec.studentportal.registration.RegistrationController;
+import edu.mec.studentportal.common.CurrentUser;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -32,17 +32,17 @@ public class FeedbackController {
         Authentication authentication
     ) {
         FeedbackResponse response =
-            feedbackService.submit(eventId, RegistrationController.currentUserId(authentication), request);
+            feedbackService.submit(eventId, CurrentUser.id(authentication), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
     public List<FeedbackResponse> list(@PathVariable long eventId, Authentication authentication) {
-        return feedbackService.listForEvent(eventId, RegistrationController.currentUserId(authentication));
+        return feedbackService.listForEvent(eventId, CurrentUser.id(authentication));
     }
 
     @GetMapping("/summary")
     public FeedbackSummaryResponse summary(@PathVariable long eventId, Authentication authentication) {
-        return feedbackService.summary(eventId, RegistrationController.currentUserId(authentication));
+        return feedbackService.summary(eventId, CurrentUser.id(authentication));
     }
 }

@@ -56,9 +56,4 @@ public class RegistrationController {
     ) {
         return registrationService.roster(eventId, CurrentUser.id(authentication));
     }
-
-    /** Resolves the server-side user id from the security principal (Member 2's JWT subject). */
-    public static long currentUserId(Authentication authentication) {
-        return CurrentUser.id(authentication);
-    }
 }

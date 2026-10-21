@@ -1,6 +1,6 @@
 package edu.mec.studentportal.notification;
 
-import edu.mec.studentportal.registration.RegistrationController;
+import edu.mec.studentportal.common.CurrentUser;
 import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +21,7 @@ public class NotificationController {
 
     @GetMapping("/me")
     public List<NotificationResponse> listMine(Authentication authentication) {
-        return notificationService.listMine(RegistrationController.currentUserId(authentication));
+        return notificationService.listMine(CurrentUser.id(authentication));
     }
 
     @PatchMapping("/{id}/read")
@@ -29,6 +29,6 @@ public class NotificationController {
         @PathVariable long id,
         Authentication authentication
     ) {
-        return notificationService.markRead(id, RegistrationController.currentUserId(authentication));
+        return notificationService.markRead(id, CurrentUser.id(authentication));
     }
 }
