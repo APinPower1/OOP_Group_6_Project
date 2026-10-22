@@ -79,6 +79,21 @@ public final class DatabaseTargetValidator {
         return trimmed;
     }
 
+    static String validateLocal(String url) {
+        String validatedUrl = validate(url);
+        URI uri;
+        try {
+            uri = new URI(validatedUrl.substring("jdbc:".length()));
+        } catch (URISyntaxException exception) {
+            throw unsafeUrl("the URL is not a well-formed URI.");
+        }
+        String host = uri.getHost();
+        if (!"localhost".equalsIgnoreCase(host) && !"127.0.0.1".equals(host)) {
+            throw unsafeUrl("the first-admin bootstrap requires a local loopback database host.");
+        }
+        return validatedUrl;
+    }
+
     /**
      * Echoes a rejected schema only when it is a plain identifier; anything else (which could
      * smuggle a secret into a log line) is replaced with a placeholder.

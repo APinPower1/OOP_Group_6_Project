@@ -50,6 +50,20 @@ class DatabaseTargetValidatorTest {
     }
 
     @Test
+    void localBootstrapAcceptsOnlyLoopbackHosts() {
+        assertThat(DatabaseTargetValidator.validateLocal(
+            "jdbc:mysql://localhost:3306/student_portal"))
+            .isEqualTo("jdbc:mysql://localhost:3306/student_portal");
+        assertThat(DatabaseTargetValidator.validateLocal(
+            "jdbc:mysql://127.0.0.1:3306/student_portal"))
+            .isEqualTo("jdbc:mysql://127.0.0.1:3306/student_portal");
+        assertThatThrownBy(() -> DatabaseTargetValidator.validateLocal(
+            "jdbc:mysql://db.example.internal:3306/student_portal"))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("local loopback");
+    }
+
+    @Test
     void returnsValidatedUrlUnchanged() {
         String url = "jdbc:mysql://localhost:3306/student_portal";
         assertThat(DatabaseTargetValidator.validate(url)).isEqualTo(url);

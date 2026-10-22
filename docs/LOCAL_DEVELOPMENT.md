@@ -17,11 +17,11 @@ This file uses the shared baseline in `docs/BUILD_BASELINE.md`: Java 21, Spring 
 3. Create a local MySQL database (example name `student_portal`).
 4. Run `database/create_database.sql` once to create the empty `student_portal` database.
 5. Start Spring Boot. Flyway applies `backend/src/main/resources/db/migration/V1__initial_schema.sql` automatically.
-6. Create demo accounts with the built-in seed helper: start the backend once with `DEMO_SEED=true`. The helper (a) refuses any datasource URL whose schema is not exactly `student_portal`, (b) skips when users already exist, and (c) stores only BCrypt hashes via `UserService.createUser`. Never insert demo passwords through SQL.
-7. Verify `GET http://localhost:8080/api/health` returns healthy status.
+6. Create demo accounts with the built-in seed helper: start the backend once with `DEMO_SEED=true`. The helper (a) refuses any datasource URL whose schema is not exactly `student_portal`, (b) skips when users already exist, and (c) stores only BCrypt hashes via `UserService.createUser`. Never insert demo passwords through SQL. To create a single real first administrator instead, use the guarded `--bootstrap-admin` flow documented below.
+7. Verify `GET http://localhost:8080/api/health` returns healthy status. Protected API routes require a valid JWT and enforce role/ownership authorization.
 8. Start the Swing client using `./gradlew :client:run`.
 9. Configure API base URL for the client, normally `http://localhost:8080/api` during local development.
-10. Log in with the local demo credentials below. Never use real college credentials.
+10. Log in with the local demo credentials below (or your bootstrap administrator account). Never use real college credentials.
 
 ### Local demo credentials (seeded accounts)
 
@@ -43,6 +43,40 @@ These passwords are disposable local-demo fixtures, not secrets; rotate or delet
 - `JWT_TTL_SECONDS`, suggested `1800`
 - `SERVER_PORT`, default `8080`
 - `DEMO_SEED`, set to `true` once to seed local demo accounts (see above); leave unset otherwise
+
+## Bootstrap the first local administrator
+
+The account bootstrap is a one-time local-development operation. It requires the explicit
+`--bootstrap-admin` application argument, validates that the configured JDBC URL targets exactly
+the `student_portal` schema on `localhost` or `127.0.0.1`, acquires a MySQL advisory lock, and
+refuses to run when any admin account already exists. The password is read only from
+`ADMIN_BOOTSTRAP_PASSWORD` and is stored as a BCrypt hash. The helper never prints the password.
+
+Set the DB/JWT environment variables above plus:
+
+- `ADMIN_BOOTSTRAP_EMAIL` (required)
+- `ADMIN_BOOTSTRAP_PASSWORD` (required; 8–72 UTF-8 bytes)
+- `ADMIN_BOOTSTRAP_NAME` (optional; defaults to `Portal Administrator`)
+- `ADMIN_BOOTSTRAP_DEPARTMENT` (optional; defaults to `Administration`)
+
+PowerShell example; enter secrets only at the local prompts and do not commit or paste them into
+source files:
+
+```powershell
+$env:DB_USERNAME = Read-Host "Local MySQL username"
+$secureDbPassword = Read-Host "Local MySQL password" -AsSecureString
+$env:DB_PASSWORD = [System.Net.NetworkCredential]::new("", $secureDbPassword).Password
+$secureJwtSecret = Read-Host "Random JWT secret (at least 32 bytes)" -AsSecureString
+$env:JWT_SECRET = [System.Net.NetworkCredential]::new("", $secureJwtSecret).Password
+$env:ADMIN_BOOTSTRAP_EMAIL = Read-Host "Admin login email"
+$secureAdminPassword = Read-Host "Admin password (8-72 UTF-8 bytes)" -AsSecureString
+$env:ADMIN_BOOTSTRAP_PASSWORD = [System.Net.NetworkCredential]::new("", $secureAdminPassword).Password
+.\gradlew.bat :backend:bootRun --args="--bootstrap-admin"
+```
+
+After startup confirms that the account was created, stop the backend, clear the bootstrap
+password variable, and start the backend normally with `.\gradlew.bat :backend:bootRun`. A second
+bootstrap attempt is refused once any administrator exists.
 
 ## Local timezone
 
