@@ -28,6 +28,7 @@ Because JWT and Spring Boot are part of the stack, the Swing client is **not all
 8. `docs/AUTH_AND_SECURITY.md`
 9. The assigned `member-handoffs/MEMBER-XX.md`
 10. `docs/AI_AGENT_PROMPT.md`
+11. `docs/DEPLOYMENT.md` (CI, Docker, environment variables)
 
 All members must use the same versions of the shared contracts. If an AI proposes a change to an endpoint, DTO, class name, table, status, enum or shared configuration, stop and request approval before implementing it.
 
@@ -45,6 +46,9 @@ student-portal/
 ├── docs/                    # Shared contracts and team workflow
 ├── diagrams/                # Updated architecture/flow sources
 ├── member-handoffs/         # One scoped assignment per member
+├── Dockerfile               # Backend image (multi-stage, bootJar)
+├── docker-compose.yml       # Local full-stack: MySQL 8.4 + backend
+├── .github/workflows/ci.yml # CI: wrapper validation + full build against MySQL
 ├── HANDOFF.md
 └── README.md
 ```
