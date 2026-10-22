@@ -4,10 +4,8 @@ import edu.mec.studentportal.client.api.ApiClient;
 import edu.mec.studentportal.client.api.ApiException;
 import edu.mec.studentportal.client.api.SessionContext;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Insets;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -37,17 +35,18 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
         String identity = session.getUser() == null
             ? ""
             : session.getUser().fullName() + "  ·  " + session.getRole();
-        JLabel eyebrow = new JLabel("STUDENT PORTAL");
-        eyebrow.setForeground(SwingTheme.TEAL);
+        JLabel eyebrow = new JLabel("CAMPUS CONNECT  /  " + session.getRole());
+        eyebrow.setForeground(new java.awt.Color(176, 223, 215));
         eyebrow.setFont(eyebrow.getFont().deriveFont(Font.BOLD, 11f));
         JLabel heading = new JLabel(title);
-        heading.setForeground(SwingTheme.NAVY);
-        heading.setFont(heading.getFont().deriveFont(Font.BOLD, 25f));
+        heading.setForeground(java.awt.Color.WHITE);
+        heading.setFont(heading.getFont().deriveFont(Font.BOLD, 27f));
         JLabel identityLabel = new JLabel(identity);
-        identityLabel.setForeground(SwingTheme.MUTED);
+        identityLabel.setForeground(new java.awt.Color(211, 222, 231));
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
+        logoutButton.setBackground(new java.awt.Color(235, 244, 242));
         actions.add(refreshButton);
         actions.add(logoutButton);
 
@@ -57,20 +56,20 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
         titleBlock.add(heading, BorderLayout.CENTER);
         titleBlock.add(identityLabel, BorderLayout.SOUTH);
 
-        JPanel north = new JPanel(new BorderLayout(16, 0));
-        north.setBackground(SwingTheme.SURFACE);
-        north.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(SwingTheme.BORDER),
-            BorderFactory.createEmptyBorder(18, 22, 18, 18)
-        ));
+        CampusBanner north = new CampusBanner();
+        north.setLayout(new BorderLayout(16, 0));
+        north.setPreferredSize(new java.awt.Dimension(600, 142));
+        north.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 22));
         north.add(titleBlock, BorderLayout.WEST);
         north.add(actions, BorderLayout.EAST);
 
         tabs.setBackground(SwingTheme.SURFACE);
         tabs.setForeground(SwingTheme.TEXT);
+        tabs.setFont(tabs.getFont().deriveFont(Font.BOLD, 13f));
+        tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(SwingTheme.BORDER),
-            BorderFactory.createEmptyBorder(6, 8, 8, 8)
+            BorderFactory.createEmptyBorder(8, 10, 10, 10)
         ));
 
         statusLabel.setForeground(SwingTheme.MUTED);

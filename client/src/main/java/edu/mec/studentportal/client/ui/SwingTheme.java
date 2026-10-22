@@ -27,7 +27,7 @@ public final class SwingTheme {
         UIManager.put("Button.font", strong);
         UIManager.put("Button.background", SURFACE);
         UIManager.put("Button.foreground", NAVY);
-        UIManager.put("Button.focus", new Color(0, 0, 0, 0));
+        UIManager.put("Button.focus", new Color(116, 181, 173));
         UIManager.put("Button.margin", new java.awt.Insets(8, 14, 8, 14));
         UIManager.put("TextField.font", body);
         UIManager.put("TextField.background", SURFACE);
@@ -45,6 +45,8 @@ public final class SwingTheme {
         UIManager.put("TabbedPane.background", PAGE);
         UIManager.put("TabbedPane.foreground", TEXT);
         UIManager.put("TabbedPane.selected", SURFACE);
+        UIManager.put("TabbedPane.tabInsets", new java.awt.Insets(10, 14, 10, 14));
+        UIManager.put("TabbedPane.contentBorderInsets", new java.awt.Insets(12, 10, 10, 10));
         UIManager.put("Table.font", body);
         UIManager.put("Table.foreground", TEXT);
         UIManager.put("Table.background", SURFACE);

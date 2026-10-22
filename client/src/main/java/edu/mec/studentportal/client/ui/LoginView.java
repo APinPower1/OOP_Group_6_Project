@@ -10,9 +10,9 @@ import java.awt.Color;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Font;
 import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -38,37 +38,44 @@ public final class LoginView extends JPanel {
         this.session = session;
         setBackground(SwingTheme.PAGE);
 
-        JPanel welcome = new JPanel(new GridBagLayout());
-        welcome.setBackground(SwingTheme.NAVY);
+        CampusBanner welcome = new CampusBanner();
+        welcome.setPreferredSize(new Dimension(420, 400));
         welcome.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
+        welcome.setLayout(new GridBagLayout());
         GridBagConstraints welcomeConstraints = new GridBagConstraints();
         welcomeConstraints.gridx = 0;
         welcomeConstraints.anchor = GridBagConstraints.WEST;
         welcomeConstraints.weightx = 1;
         welcomeConstraints.fill = GridBagConstraints.HORIZONTAL;
         welcomeConstraints.insets = new Insets(0, 0, 14, 0);
-        JLabel brand = new JLabel("CAMPUS • CONNECT");
+        JLabel brand = new JLabel("CAMPUS CONNECT  /  STUDENT LIFE");
         brand.setForeground(new Color(147, 218, 208));
         brand.setFont(brand.getFont().deriveFont(Font.BOLD, 12f));
         welcomeConstraints.gridy = 0;
         welcome.add(brand, welcomeConstraints);
         JLabel welcomeTitle = new JLabel(
-            "<html>Everything<br>happening on<br>your campus.</html>"
+            "<html>Your campus.<br>Your people.<br>Your moment.</html>"
         );
         welcomeTitle.setForeground(Color.WHITE);
-        welcomeTitle.setFont(welcomeTitle.getFont().deriveFont(Font.BOLD, 32f));
+        welcomeTitle.setFont(welcomeTitle.getFont().deriveFont(Font.BOLD, 30f));
         welcomeConstraints.gridy = 1;
         welcomeConstraints.insets = new Insets(0, 0, 18, 0);
         welcome.add(welcomeTitle, welcomeConstraints);
         JLabel welcomeCopy = new JLabel(
-            "<html>Discover events, find your community,<br>"
-                + "and make campus life count.</html>"
+            "<html>Find the events, ideas and communities<br>"
+                + "that make college feel like yours.</html>"
         );
         welcomeCopy.setForeground(new Color(202, 213, 224));
         welcomeCopy.setFont(welcomeCopy.getFont().deriveFont(15f));
         welcomeConstraints.gridy = 2;
         welcomeConstraints.insets = new Insets(0, 0, 0, 0);
         welcome.add(welcomeCopy, welcomeConstraints);
+        JLabel highlights = new JLabel("EVENTS     ·     CLUBS     ·     COMMUNITY");
+        highlights.setForeground(new Color(173, 219, 212));
+        highlights.setFont(highlights.getFont().deriveFont(Font.BOLD, 10f));
+        welcomeConstraints.gridy = 3;
+        welcomeConstraints.insets = new Insets(30, 0, 0, 0);
+        welcome.add(highlights, welcomeConstraints);
 
         JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(SwingTheme.SURFACE);
