@@ -24,4 +24,5 @@ application {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    jvmArgs("-Djava.awt.headless=true")
 }

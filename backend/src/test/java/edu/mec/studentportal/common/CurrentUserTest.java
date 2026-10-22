@@ -1,7 +1,7 @@
 package edu.mec.studentportal.common;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import edu.mec.studentportal.api.ApiException;
 import edu.mec.studentportal.user.Role;
@@ -9,45 +9,79 @@ import edu.mec.studentportal.user.UserSecurityState;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 class CurrentUserTest {
+
     @Test
-    void resolvesIdFromProductionSecurityStatePrincipal() {
-        var authentication = UsernamePasswordAuthenticationToken.authenticated(
-            new UserSecurityState(41L, Role.ADMIN, true),
+    void resolvesIdFromUserSecurityStatePrincipalUsedByJwtFilter() {
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(
+            new UserSecurityState(42L, Role.STUDENT, true),
             null,
-            List.of()
+            List.of(new SimpleGrantedAuthority("ROLE_STUDENT"))
         );
 
-        assertEquals(41L, CurrentUser.id(authentication));
+        assertThat(CurrentUser.id(authentication)).isEqualTo(42L);
     }
 
     @Test
-    void resolvesIdFromStringPrincipalUsedByControllerTests() {
-        var authentication = UsernamePasswordAuthenticationToken.authenticated(
-            "42",
+    void resolvesIdFromNumericStringPrincipalUsedByTestAuthFilter() {
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(
+            "41",
             null,
-            List.of()
+            List.of(new SimpleGrantedAuthority("ROLE_USER"))
         );
 
-        assertEquals(42L, CurrentUser.id(authentication));
+        assertThat(CurrentUser.id(authentication)).isEqualTo(41L);
     }
 
     @Test
-    void rejectsMissingOrInvalidPrincipal() {
-        var missingPrincipal = UsernamePasswordAuthenticationToken.authenticated(
-            null,
-            null,
-            List.of()
-        );
-        var invalidPrincipal = UsernamePasswordAuthenticationToken.authenticated(
-            "not-an-id",
+    void rejectsNullAuthentication() {
+        assertThatThrownBy(() -> CurrentUser.id(null))
+            .isInstanceOf(ApiException.class)
+            .hasMessage("Authentication is required.")
+            .extracting(exception -> ((ApiException) exception).getStatus().value())
+            .isEqualTo(401);
+    }
+
+    @Test
+    void rejectsNonNumericPrincipalName() {
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(
+            "not-a-number",
             null,
             List.of()
         );
 
-        assertThrows(ApiException.class, () -> CurrentUser.id(null));
-        assertThrows(ApiException.class, () -> CurrentUser.id(missingPrincipal));
-        assertThrows(ApiException.class, () -> CurrentUser.id(invalidPrincipal));
+        assertThatThrownBy(() -> CurrentUser.id(authentication))
+            .isInstanceOf(ApiException.class)
+            .extracting(exception -> ((ApiException) exception).getCode())
+            .isEqualTo("UNAUTHENTICATED");
+    }
+
+    @Test
+    void rejectsAuthenticationWithoutPrincipal() {
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(
+            null,
+            null,
+            List.of()
+        );
+
+        assertThatThrownBy(() -> CurrentUser.id(authentication))
+            .isInstanceOf(ApiException.class);
+    }
+
+    @Test
+    void rejectsNonPositiveUserId() {
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(
+            "0",
+            null,
+            List.of()
+        );
+
+        assertThatThrownBy(() -> CurrentUser.id(authentication))
+            .isInstanceOf(ApiException.class)
+            .extracting(exception -> ((ApiException) exception).getCode())
+            .isEqualTo("UNAUTHENTICATED");
     }
 }
