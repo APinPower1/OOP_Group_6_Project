@@ -25,7 +25,7 @@ public final class MainFrame extends JFrame {
     private final JPanel cardPanel = new JPanel(cards);
 
     public MainFrame(ClientConfig config) {
-        super("Student Portal with Event Management System");
+        super("Government Model Engineering College, Thrikkakara — Student Portal");
         this.session = new SessionContext();
         this.api = new HttpApiClient(config, session);
         this.loginView = new LoginView(api, session);
@@ -46,7 +46,7 @@ public final class MainFrame extends JFrame {
         }));
 
         cards.show(cardPanel, "login");
-        setTitle("Student Portal — signed out");
+        setTitle("MEC Thrikkakara — Student Portal");
     }
 
     public SessionContext getSession() {
@@ -67,7 +67,7 @@ public final class MainFrame extends JFrame {
         cardPanel.add(dashboard, key);
         cardPanel.revalidate();
         cards.show(cardPanel, key);
-        setTitle("Student Portal — " + session.getUser().fullName() + " (" + role + ")");
+        setTitle("MEC Portal — " + session.getUser().fullName() + " (" + role + ")");
         if (dashboard instanceof Refreshable refreshable) {
             refreshable.refreshAll();
         }
@@ -84,7 +84,7 @@ public final class MainFrame extends JFrame {
         cards.show(cardPanel, "login");
         loginView.clearInputs();
         loginView.showStatus("Signed out.");
-        setTitle("Student Portal — signed out");
+        setTitle("MEC Thrikkakara — Student Portal");
     }
 
     /** Implemented by dashboards so the frame can trigger an initial data load. */

@@ -7,13 +7,14 @@ import javax.swing.plaf.FontUIResource;
 
 /** Shared visual defaults for the desktop client. */
 public final class SwingTheme {
-    public static final Color NAVY = new Color(28, 45, 68);
-    public static final Color TEAL = new Color(26, 119, 116);
-    public static final Color PAGE = new Color(243, 246, 249);
+    public static final Color NAVY = new Color(42, 42, 83);
+    public static final Color ACCENT = new Color(253, 45, 52);
+    public static final Color GOLD = new Color(255, 200, 112);
+    public static final Color PAGE = new Color(248, 249, 250);
     public static final Color SURFACE = Color.WHITE;
-    public static final Color TEXT = new Color(43, 55, 70);
-    public static final Color MUTED = new Color(108, 122, 138);
-    public static final Color BORDER = new Color(224, 230, 236);
+    public static final Color TEXT = new Color(51, 51, 51);
+    public static final Color MUTED = new Color(103, 105, 125);
+    public static final Color BORDER = new Color(224, 224, 232);
 
     private SwingTheme() {}
 
@@ -27,16 +28,25 @@ public final class SwingTheme {
         UIManager.put("Button.font", strong);
         UIManager.put("Button.background", SURFACE);
         UIManager.put("Button.foreground", NAVY);
-        UIManager.put("Button.focus", new Color(116, 181, 173));
+        UIManager.put("Button.focus", new Color(180, 197, 228));
         UIManager.put("Button.margin", new java.awt.Insets(8, 14, 8, 14));
+        UIManager.put("ButtonUI", InteractiveButtonUI.class.getName());
+        UIManager.put("TextField.border", javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(BORDER),
+            javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
         UIManager.put("TextField.font", body);
         UIManager.put("TextField.background", SURFACE);
         UIManager.put("TextField.foreground", TEXT);
-        UIManager.put("TextField.caretForeground", TEAL);
+        UIManager.put("TextField.caretForeground", ACCENT);
+        UIManager.put("PasswordField.border", javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(BORDER),
+            javax.swing.BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
         UIManager.put("PasswordField.font", body);
         UIManager.put("PasswordField.background", SURFACE);
         UIManager.put("PasswordField.foreground", TEXT);
-        UIManager.put("PasswordField.caretForeground", TEAL);
+        UIManager.put("PasswordField.caretForeground", ACCENT);
         UIManager.put("ComboBox.font", body);
         UIManager.put("ComboBox.background", SURFACE);
         UIManager.put("ComboBox.foreground", TEXT);
@@ -50,10 +60,10 @@ public final class SwingTheme {
         UIManager.put("Table.font", body);
         UIManager.put("Table.foreground", TEXT);
         UIManager.put("Table.background", SURFACE);
-        UIManager.put("Table.selectionBackground", new Color(221, 239, 237));
+        UIManager.put("Table.selectionBackground", new Color(238, 237, 249));
         UIManager.put("Table.selectionForeground", NAVY);
-        UIManager.put("Table.gridColor", new Color(237, 241, 245));
-        UIManager.put("Table.rowHeight", 32);
+        UIManager.put("Table.gridColor", new Color(237, 237, 243));
+        UIManager.put("Table.rowHeight", 34);
         UIManager.put("Table.showGrid", false);
         UIManager.put("Table.intercellSpacing", new java.awt.Dimension(0, 1));
         UIManager.put("TableHeader.font", new FontUIResource("SansSerif", Font.BOLD, 12));

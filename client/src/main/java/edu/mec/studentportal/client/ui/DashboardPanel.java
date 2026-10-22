@@ -29,20 +29,20 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
         JButton refreshButton = new JButton("Refresh all");
         refreshButton.addActionListener(e -> refreshAll());
         JButton logoutButton = new JButton("Logout");
-        logoutButton.setForeground(SwingTheme.TEAL);
+        logoutButton.setForeground(SwingTheme.ACCENT);
         logoutButton.addActionListener(e -> session.clearSession());
 
         String identity = session.getUser() == null
             ? ""
             : session.getUser().fullName() + "  ·  " + session.getRole();
-        JLabel eyebrow = new JLabel("CAMPUS CONNECT  /  " + session.getRole());
-        eyebrow.setForeground(new java.awt.Color(176, 223, 215));
+        JLabel eyebrow = new JLabel("MEC THRIKKAKARA  /  " + session.getRole());
+        eyebrow.setForeground(SwingTheme.GOLD);
         eyebrow.setFont(eyebrow.getFont().deriveFont(Font.BOLD, 11f));
         JLabel heading = new JLabel(title);
         heading.setForeground(java.awt.Color.WHITE);
         heading.setFont(heading.getFont().deriveFont(Font.BOLD, 27f));
         JLabel identityLabel = new JLabel(identity);
-        identityLabel.setForeground(new java.awt.Color(211, 222, 231));
+        identityLabel.setForeground(new java.awt.Color(236, 234, 243));
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         actions.setOpaque(false);
