@@ -1,36 +1,47 @@
 package edu.mec.studentportal.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import edu.mec.studentportal.client.api.ApiClient;
-import edu.mec.studentportal.client.auth.SessionContext;
-import edu.mec.studentportal.client.ui.PortalFrame;
+import edu.mec.studentportal.client.api.ClientConfig;
+import edu.mec.studentportal.client.ui.MainFrame;
+import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+/**
+ * Desktop entry point: loads client configuration (API base URL/timeouts only — no database
+ * settings), then shows the main frame on the Event Dispatch Thread.
+ */
 public final class ClientApplication {
     private ClientApplication() {}
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            configureLookAndFeel();
-            ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-            SessionContext session = new SessionContext();
-            ApiClient apiClient = new ApiClient(objectMapper, session::token);
-            new PortalFrame(apiClient, session).setVisible(true);
-        });
-    }
-
-    private static void configureLookAndFeel() {
+        ClientConfig config;
         try {
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    return;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException exception) {
-            throw new IllegalStateException("Unable to configure the desktop look and feel.", exception);
+            config = ClientConfig.load();
+        } catch (RuntimeException exception) {
+            System.err.println("Client configuration error: " + exception.getMessage());
+            SwingUtilities.invokeLater(() ->
+                JOptionPane.showMessageDialog(
+                    null,
+                    "Client configuration error:\n" + exception.getMessage(),
+                    "Student Portal",
+                    JOptionPane.ERROR_MESSAGE
+                )
+            );
+            return;
         }
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception exception) {
+            System.out.println("System look and feel unavailable; using default.");
+        }
+
+        System.out.println("Student Portal client → API base URL: " + config.baseUrl());
+        SwingUtilities.invokeLater(() -> {
+            MainFrame frame = new MainFrame(config);
+            frame.setSize(1180, 760);
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 }
