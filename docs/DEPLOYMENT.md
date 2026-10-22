@@ -77,4 +77,10 @@ anything that outlives the job. No repository secrets are required.
 ```bash
 JAVA_HOME=/opt/homebrew/opt/openjdk@21 TEST_DB_PASSWORD=<pw> ./gradlew clean build   # full suite
 docker compose up --build && curl -fsS http://localhost:8080/api/health              # runtime smoke
+./scripts/smoke.sh http://localhost:8080                                             # 30-check API walkthrough
 ```
+
+`scripts/smoke.sh` drives the whole flow over HTTP (health → four-role login → event
+proposal/approve → registration seat math → audience-scoped notifications → admin
+report and user disable/enable). It creates timestamped junk data, so run it against a
+disposable or demo database.
