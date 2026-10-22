@@ -39,6 +39,7 @@ public abstract class DatabaseIntegrationTestSupport {
         registry.add("spring.datasource.password", TestDatabaseAvailability::password);
         registry.add("spring.datasource.hikari.maximum-pool-size", () -> "30");
         registry.add("spring.flyway.enabled", () -> "true");
+        registry.add("app.jwt.secret", () -> "student-portal-local-test-secret-0123456789");
     }
 
     @BeforeEach
