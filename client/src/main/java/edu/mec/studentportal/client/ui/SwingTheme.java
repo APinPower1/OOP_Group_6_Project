@@ -1,0 +1,62 @@
+package edu.mec.studentportal.client.ui;
+
+import java.awt.Color;
+import java.awt.Font;
+import javax.swing.UIManager;
+import javax.swing.plaf.FontUIResource;
+
+/** Shared visual defaults for the desktop client. */
+public final class SwingTheme {
+    public static final Color NAVY = new Color(28, 45, 68);
+    public static final Color TEAL = new Color(26, 119, 116);
+    public static final Color PAGE = new Color(243, 246, 249);
+    public static final Color SURFACE = Color.WHITE;
+    public static final Color TEXT = new Color(43, 55, 70);
+    public static final Color MUTED = new Color(108, 122, 138);
+    public static final Color BORDER = new Color(224, 230, 236);
+
+    private SwingTheme() {}
+
+    public static void install() {
+        FontUIResource body = new FontUIResource("SansSerif", Font.PLAIN, 13);
+        FontUIResource strong = new FontUIResource("SansSerif", Font.BOLD, 13);
+
+        UIManager.put("Panel.background", PAGE);
+        UIManager.put("Label.foreground", TEXT);
+        UIManager.put("Label.font", body);
+        UIManager.put("Button.font", strong);
+        UIManager.put("Button.background", SURFACE);
+        UIManager.put("Button.foreground", NAVY);
+        UIManager.put("Button.focus", new Color(0, 0, 0, 0));
+        UIManager.put("Button.margin", new java.awt.Insets(8, 14, 8, 14));
+        UIManager.put("TextField.font", body);
+        UIManager.put("TextField.background", SURFACE);
+        UIManager.put("TextField.foreground", TEXT);
+        UIManager.put("TextField.caretForeground", TEAL);
+        UIManager.put("PasswordField.font", body);
+        UIManager.put("PasswordField.background", SURFACE);
+        UIManager.put("PasswordField.foreground", TEXT);
+        UIManager.put("PasswordField.caretForeground", TEAL);
+        UIManager.put("ComboBox.font", body);
+        UIManager.put("ComboBox.background", SURFACE);
+        UIManager.put("ComboBox.foreground", TEXT);
+        UIManager.put("Spinner.font", body);
+        UIManager.put("TabbedPane.font", strong);
+        UIManager.put("TabbedPane.background", PAGE);
+        UIManager.put("TabbedPane.foreground", TEXT);
+        UIManager.put("TabbedPane.selected", SURFACE);
+        UIManager.put("Table.font", body);
+        UIManager.put("Table.foreground", TEXT);
+        UIManager.put("Table.background", SURFACE);
+        UIManager.put("Table.selectionBackground", new Color(221, 239, 237));
+        UIManager.put("Table.selectionForeground", NAVY);
+        UIManager.put("Table.gridColor", new Color(237, 241, 245));
+        UIManager.put("Table.rowHeight", 32);
+        UIManager.put("TableHeader.font", new FontUIResource("SansSerif", Font.BOLD, 12));
+        UIManager.put("TableHeader.background", new Color(239, 243, 247));
+        UIManager.put("TableHeader.foreground", NAVY);
+        UIManager.put("ScrollPane.background", SURFACE);
+        UIManager.put("OptionPane.messageFont", body);
+        UIManager.put("OptionPane.buttonFont", strong);
+    }
+}
