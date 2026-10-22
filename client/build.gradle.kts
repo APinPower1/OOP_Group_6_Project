@@ -15,6 +15,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 application {
@@ -23,4 +24,5 @@ application {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
+    jvmArgs("-Djava.awt.headless=true")
 }
