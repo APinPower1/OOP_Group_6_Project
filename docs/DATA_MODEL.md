@@ -28,6 +28,7 @@ Each role profile is one-to-one with `users`. The UserService must ensure the pr
 
 ### `registrations`
 - Foreign keys to `student_profiles.user_id` and `events.id`.
+- **Student foreign key target:** `fk_registration_student` references `student_profiles.user_id`, not `users.id`. A registration therefore requires that the student has a `student_profiles` row; a user without a student profile cannot be registered, and the database will reject such a row. This enforces the role-profile split at the persistence level and is the database half of the invariant that the role-specific profile must match `users.role` (see "Role profile tables").
 - Valid statuses: `CONFIRMED`, `CANCELLED`.
 - Unique `(student_id, event_id)` prevents duplicate rows.
 - Re-registering after cancellation reactivates the same row and gives a new ticket number.
@@ -36,6 +37,7 @@ Each role profile is one-to-one with `users`. The UserService must ensure the pr
 ### `clubs` / `club_members`
 - `clubs` holds name, description, category and active flag.
 - `club_members` is the many-to-many association and includes join date/status.
+- **Student foreign key target:** `fk_club_membership_student` references `student_profiles.user_id`, not `users.id`. Club membership therefore requires an existing `student_profiles` row.
 - Unique `(club_id, student_id)`; a prior `LEFT` row is reactivated when the student joins again.
 
 ### `announcements` / `notifications`
@@ -44,9 +46,15 @@ Each role profile is one-to-one with `users`. The UserService must ensure the pr
 - Notifications are individual rows with recipient, announcement, creation time and optional read time.
 - Archiving an announcement does not delete notification history.
 
+**MySQL NULL behavior (important):** In MySQL, `NULL` values are **distinct** in a `UNIQUE` index. This is intentional in V1:
+- `uq_notification_recipient_announcement (recipient_user_id, announcement_id)` prevents duplicate announcement notifications for the same recipient/announcement, but `EVENT_CANCELLED` rows have `announcement_id` `NULL`, so multiple event-cancel notifications do not collide on this index.
+- `uq_notification_recipient_event_type (recipient_user_id, event_id, notification_type)` prevents duplicate event-cancel notifications for the same recipient/event/type, but `ANNOUNCEMENT` rows have `event_id` `NULL`, so they do not collide here.
+`ck_notification_target` enforces which column is populated per `notification_type`, so each unique index guards the cases it is meant to protect. Do not rely on `NULL` being treated as equal when reasoning about these constraints.
+
 ### `feedback`
 - Rating is integer 1–5, comment optional, timestamp set by server.
 - Unique `(student_id, event_id)`.
+- **Student foreign key target:** `fk_feedback_student` references `student_profiles.user_id`, not `users.id`. The database requires an existing `student_profiles` row for a student to submit feedback.
 - Student must have a confirmed registration and the event's `end_time` must be in the past.
 
 ## Relationship summary

@@ -1,5 +1,6 @@
 package edu.mec.studentportal.event;
 
+import edu.mec.studentportal.testsupport.TestDatabaseUrlValidator;
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -8,17 +9,20 @@ import java.sql.DriverManager;
  * Tests are skipped (not failed) when the database is unreachable so a plain
  * {@code ./gradlew build} stays green on machines without MySQL.
  *
+ * <p>URLs are validated by {@link TestDatabaseUrlValidator} before any connection attempt:
+ * only the exact {@code student_portal_test} schema is allowed; unsafe or malformed
+ * configuration throws {@link IllegalStateException} rather than being skipped.
+ *
  * <p>Configuration via environment variables:
  * <ul>
  *   <li>{@code TEST_DB_URL} — default {@code jdbc:mysql://localhost:3306/student_portal_test?serverTimezone=Asia/Kolkata}</li>
- *   <li>{@code TEST_DB_USERNAME} — default {@code student_portal_app}</li>
+ *   <li>{@code TEST_DB_USERNAME} — default {@code student_portal_test_app}</li>
  *   <li>{@code TEST_DB_PASSWORD} — no default; tests skip when unset/unreachable</li>
  * </ul>
  */
 public final class EventTestDatabase {
-    static final String DEFAULT_URL =
-        "jdbc:mysql://localhost:3306/student_portal_test?serverTimezone=Asia/Kolkata";
-    static final String DEFAULT_USERNAME = "student_portal_app";
+    static final String DEFAULT_URL = TestDatabaseUrlValidator.REQUIRED_SCHEMA_EXAMPLE_URL;
+    static final String DEFAULT_USERNAME = "student_portal_test_app";
 
     private static Boolean available;
 
@@ -26,10 +30,11 @@ public final class EventTestDatabase {
 
     /** JUnit {@code @EnabledIf} entry point. */
     public static synchronized boolean isAvailable() {
+        String url = envOrDefault("TEST_DB_URL", DEFAULT_URL);
+        TestDatabaseUrlValidator.validate(url);
         if (available != null) {
             return available;
         }
-        String url = envOrDefault("TEST_DB_URL", DEFAULT_URL);
         String username = envOrDefault("TEST_DB_USERNAME", DEFAULT_USERNAME);
         String password = System.getenv("TEST_DB_PASSWORD");
         if (password == null || password.isBlank()) {
@@ -40,15 +45,17 @@ public final class EventTestDatabase {
         try (Connection connection = DriverManager.getConnection(url, username, password)) {
             available = connection.isValid(3);
         } catch (Exception exception) {
-            System.err.println("Skipping event DB tests: cannot reach test database at "
-                + url + " (" + exception.getMessage() + ")");
+            System.err.println("Skipping event DB tests: cannot connect to the required test schema '"
+    + TestDatabaseUrlValidator.REQUIRED_SCHEMA + "'.");
             available = false;
         }
         return available;
     }
 
     static String url() {
-        return envOrDefault("TEST_DB_URL", DEFAULT_URL);
+        String url = envOrDefault("TEST_DB_URL", DEFAULT_URL);
+        TestDatabaseUrlValidator.validate(url);
+        return url;
     }
 
     static String username() {
