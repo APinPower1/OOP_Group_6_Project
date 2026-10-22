@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Kolkata
+      # Throwaway CI-only test database credentials. These never touch real data:
+      # the MySQL service below is a fresh container destroyed after the run.
+      TEST_DB_URL: jdbc:mysql://localhost:3306/student_portal_test?serverTimezone=Asia/Kolkata
+      TEST_DB_USERNAME: student_portal_test_app
+      TEST_DB_PASSWORD: local-dev-password
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          TZ: Asia/Kolkata
+          MYSQL_ROOT_PASSWORD: ci-root-password
+          MYSQL_DATABASE: student_portal_test
+          MYSQL_USER: student_portal_test_app
+          MYSQL_PASSWORD: local-dev-password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -pci-root-password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build and test (backend + client)
+        run: ./gradlew build --no-daemon
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            backend/build/reports/tests/
+            client/build/reports/tests/
+          if-no-files-found: ignore

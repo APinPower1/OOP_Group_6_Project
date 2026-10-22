@@ -1,0 +1,9 @@
+.git
+.github
+**/build
+.gradle
+VIVA_GUIDE.html
+docs
+member-handoffs
+client/src
+database

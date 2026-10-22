@@ -1,0 +1,48 @@
+# Local full-stack runtime: MySQL 8.4 + backend REST API.
+# The Swing client runs on the host (it needs a display) and talks to http://localhost:8080/api.
+#
+#   docker compose up --build
+#   DEMO_SEED=true docker compose up --build    # also seed the four demo accounts
+#
+# If port 3306 is already taken by a local MySQL, run: DB_PORT=13306 docker compose up --build
+
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      TZ: Asia/Kolkata
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-root-password}
+      MYSQL_DATABASE: ${DB_NAME:-student_portal}
+      MYSQL_USER: ${DB_USERNAME:-student_portal_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-local-dev-password}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      TZ: Asia/Kolkata
+      DB_URL: jdbc:mysql://db:3306/${DB_NAME:-student_portal}?serverTimezone=Asia/Kolkata
+      DB_USERNAME: ${DB_USERNAME:-student_portal_app}
+      DB_PASSWORD: ${DB_PASSWORD:-local-dev-password}
+      # LOCAL DEV DEFAULT ONLY. For anything shared, generate a real secret:
+      #   openssl rand -base64 48
+      JWT_SECRET: ${JWT_SECRET:-local-dev-only-jwt-secret-0123456789abcdef}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-1800}
+      SERVER_PORT: "8080"
+      DEMO_SEED: ${DEMO_SEED:-false}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+volumes:
+  db-data:
