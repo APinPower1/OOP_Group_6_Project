@@ -32,6 +32,12 @@ This file uses the shared baseline in `docs/BUILD_BASELINE.md`: Java 21, Spring 
 - `JWT_TTL_SECONDS`, suggested `1800`
 - `SERVER_PORT`, default `8080`
 
+Keep the same `JWT_SECRET` across backend restarts. Changing it invalidates every token issued
+with the previous secret and causes open clients to be signed out. Generate a secret once for
+local development, store it in your local user environment or another untracked secret store,
+and never commit it. After changing a persistent user environment variable, open a new terminal
+before starting the backend.
+
 ## Bootstrap the first local administrator
 
 The account bootstrap is a one-time local-development operation. It requires the explicit
