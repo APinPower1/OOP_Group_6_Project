@@ -1,7 +1,6 @@
 package edu.mec.studentportal.event;
 
-import edu.mec.studentportal.api.ApiErrorCodes;
-import edu.mec.studentportal.api.ApiException;
+import edu.mec.studentportal.common.CurrentUser;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -40,12 +39,12 @@ public class EventController {
         @RequestParam(required = false) String status,
         Authentication authentication
     ) {
-        return eventService.list(currentUserId(authentication), q, from, to, status);
+        return eventService.list(CurrentUser.id(authentication), q, from, to, status);
     }
 
     @GetMapping("/{eventId}")
     public EventResponse get(@PathVariable long eventId, Authentication authentication) {
-        return eventService.get(eventId, currentUserId(authentication));
+        return eventService.get(eventId, CurrentUser.id(authentication));
     }
 
     @PostMapping
@@ -53,7 +52,7 @@ public class EventController {
         @Valid @RequestBody EventRequest request,
         Authentication authentication
     ) {
-        EventResponse response = eventService.create(request, currentUserId(authentication));
+        EventResponse response = eventService.create(request, CurrentUser.id(authentication));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -63,12 +62,12 @@ public class EventController {
         @Valid @RequestBody EventRequest request,
         Authentication authentication
     ) {
-        return eventService.update(eventId, request, currentUserId(authentication));
+        return eventService.update(eventId, request, CurrentUser.id(authentication));
     }
 
     @PostMapping("/{eventId}/approve")
     public EventResponse approve(@PathVariable long eventId, Authentication authentication) {
-        return eventService.approve(eventId, currentUserId(authentication));
+        return eventService.approve(eventId, CurrentUser.id(authentication));
     }
 
     @PostMapping("/{eventId}/reject")
@@ -77,31 +76,12 @@ public class EventController {
         @Valid @RequestBody RejectRequest request,
         Authentication authentication
     ) {
-        return eventService.reject(eventId, request.reason(), currentUserId(authentication));
+        return eventService.reject(eventId, request.reason(), CurrentUser.id(authentication));
     }
 
     @PostMapping("/{eventId}/cancel")
     public EventResponse cancel(@PathVariable long eventId, Authentication authentication) {
-        return eventService.cancel(eventId, currentUserId(authentication));
+        return eventService.cancel(eventId, CurrentUser.id(authentication));
     }
 
-    /** Resolves the server-side user id from the security principal (Member 2's JWT subject). */
-    private static long currentUserId(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            throw new ApiException(
-                HttpStatus.UNAUTHORIZED,
-                ApiErrorCodes.UNAUTHENTICATED,
-                "Authentication is required."
-            );
-        }
-        try {
-            return Long.parseLong(authentication.getName());
-        } catch (NumberFormatException exception) {
-            throw new ApiException(
-                HttpStatus.UNAUTHORIZED,
-                ApiErrorCodes.UNAUTHENTICATED,
-                "Authentication is required."
-            );
-        }
-    }
 }

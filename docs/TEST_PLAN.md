@@ -66,3 +66,18 @@
 - Each role can complete permitted workflows through Swing.
 - DB credentials/JWT secret are not in source control.
 - Member 9 records test evidence and any accepted limitations before presentation.
+
+## Acceptance coverage (member 9)
+
+The scenarios above are additionally covered end-to-end through the **production security
+chain** (real login → real JWT → real filter) in
+`backend/src/test/java/edu/mec/studentportal/acceptance/` — 21 tests, all passing.
+Detailed scenario → test → evidence mapping and the two defects this suite found are in
+[ACCEPTANCE_REPORT.md](ACCEPTANCE_REPORT.md).
+
+- Auth/users: ✅ `AuthenticationAuthorizationAcceptanceTest`
+- Events (create/approve/reject/overlap/visibility/authority): ✅ `EventLifecycleAcceptanceTest`
+- Registration seat math + feedback gating: ✅ `RegistrationAndFeedbackAcceptanceTest`
+- Clubs + announcements + admin reports + user management: ✅ `AdminUsersReportsAnnouncementsAcceptanceTest`
+- Not duplicated here (covered by unit/integration tests): concurrency races, profile-to-role mapping.
+
