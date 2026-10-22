@@ -147,6 +147,32 @@ Notification response objects include `id`, `notificationType`, `title`, `messag
 
 Feedback request: `{ "rating": 5, "comments": "Well organized." }`. Server sets `studentId` and `submittedAt`; client must not send them.
 
+### Participation report response
+
+`GET /api/admin/reports/participation` (Admin only) returns status aggregates plus a per-event participation table ordered by confirmed seats (ties by `id` ascending, maximum 50 rows):
+
+```json
+{
+  "events": { "total": 4, "pendingApproval": 1, "approved": 2, "rejected": 0, "cancelled": 1 },
+  "registrations": { "total": 10, "confirmed": 7, "cancelled": 3 },
+  "feedback": { "count": 4, "averageRating": 4.25 },
+  "participation": [
+    {
+      "eventId": 5,
+      "title": "Tech Fest Workshop",
+      "status": "APPROVED",
+      "capacity": 50,
+      "confirmedCount": 12,
+      "cancelledCount": 2,
+      "feedbackCount": 3,
+      "averageRating": 4.33
+    }
+  ]
+}
+```
+
+`averageRating` is `null` wherever no feedback exists yet (summary and rows). No student identities are exposed. Faculty access to this endpoint is deferred until the team approves the "Faculty read-only" option noted in the table.
+
 ## Admin user management
 
 The `/api/admin/users` endpoints listed in the Feedback and reports table require the `ADMIN` role. All failures use the shared error body and codes from "Common conventions". Password hashes and internal authentication details are never returned.

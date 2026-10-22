@@ -17,11 +17,22 @@ This file uses the shared baseline in `docs/BUILD_BASELINE.md`: Java 21, Spring 
 3. Create a local MySQL database (example name `student_portal`).
 4. Run `database/create_database.sql` once to create the empty `student_portal` database.
 5. Start Spring Boot. Flyway applies `backend/src/main/resources/db/migration/V1__initial_schema.sql` automatically.
-6. Do not create demo accounts until the approved application seed helper or documented setup is available. Demo passwords must be BCrypt-hashed; never store plaintext passwords in SQL or commit credentials.
-7. Verify `GET http://localhost:8080/api/health` returns healthy status. The bootstrap security config deliberately denies all other API routes until Member 2 completes JWT security.
+6. Create demo accounts with the built-in seed helper: start the backend once with `DEMO_SEED=true`. The helper (a) refuses any datasource URL whose schema is not exactly `student_portal`, (b) skips when users already exist, and (c) stores only BCrypt hashes via `UserService.createUser`. Never insert demo passwords through SQL.
+7. Verify `GET http://localhost:8080/api/health` returns healthy status.
 8. Start the Swing client using `./gradlew :client:run`.
 9. Configure API base URL for the client, normally `http://localhost:8080/api` during local development.
-10. Log in with documented local demo credentials once Member 2's login module and seed accounts are available. Never use real college credentials.
+10. Log in with the local demo credentials below. Never use real college credentials.
+
+### Local demo credentials (seeded accounts)
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@demo.mec.edu` | `DemoAdmin123` |
+| Faculty | `faculty@demo.mec.edu` | `DemoFaculty123` |
+| Organizer | `organizer@demo.mec.edu` | `DemoOrganizer123` |
+| Student | `student@demo.mec.edu` | `DemoStudent123` |
+
+These passwords are disposable local-demo fixtures, not secrets; rotate or delete the accounts on any shared environment.
 
 ## Environment variables (backend)
 
@@ -31,6 +42,7 @@ This file uses the shared baseline in `docs/BUILD_BASELINE.md`: Java 21, Spring 
 - `JWT_SECRET` (random, sufficiently long, local only)
 - `JWT_TTL_SECONDS`, suggested `1800`
 - `SERVER_PORT`, default `8080`
+- `DEMO_SEED`, set to `true` once to seed local demo accounts (see above); leave unset otherwise
 
 ## Local timezone
 
