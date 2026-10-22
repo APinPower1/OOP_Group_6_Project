@@ -29,6 +29,7 @@ public final class MainFrame extends JFrame {
         this.session = new SessionContext();
         this.api = new HttpApiClient(config, session);
         this.loginView = new LoginView(api, session);
+        getRootPane().setDefaultButton(loginView.getLoginButton());
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1000, 680));
@@ -53,6 +54,7 @@ public final class MainFrame extends JFrame {
     }
 
     private void showDashboard(Role role) {
+        getRootPane().setDefaultButton(null);
         String key = role.name();
         for (java.awt.Component component : cardPanel.getComponents()) {
             if (component.getName() != null && component.getName().equals(key)) {
@@ -72,6 +74,7 @@ public final class MainFrame extends JFrame {
     }
 
     private void showLogin() {
+        getRootPane().setDefaultButton(loginView.getLoginButton());
         for (java.awt.Component component : cardPanel.getComponents()) {
             if (component != loginView) {
                 cardPanel.remove(component);

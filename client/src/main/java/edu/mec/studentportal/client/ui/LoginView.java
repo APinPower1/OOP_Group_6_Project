@@ -97,18 +97,24 @@ public final class LoginView extends JPanel {
         form.add(subtitle, constraints);
         constraints.gridy = 2;
         constraints.insets = new Insets(24, 0, 5, 0);
-        form.add(fieldLabel("EMAIL ADDRESS"), constraints);
+        JLabel emailLabel = fieldLabel("EMAIL ADDRESS");
+        emailLabel.setLabelFor(emailField);
+        form.add(emailLabel, constraints);
         constraints.gridy = 3;
         constraints.insets = new Insets(0, 0, 12, 0);
         emailField.setColumns(28);
+        emailField.setName("login.email");
         emailField.setPreferredSize(new Dimension(320, 42));
         form.add(emailField, constraints);
         constraints.gridy = 4;
         constraints.insets = new Insets(8, 0, 5, 0);
-        form.add(fieldLabel("PASSWORD"), constraints);
+        JLabel passwordLabel = fieldLabel("PASSWORD");
+        passwordLabel.setLabelFor(passwordField);
+        form.add(passwordLabel, constraints);
         constraints.gridy = 5;
         constraints.insets = new Insets(0, 0, 20, 0);
         passwordField.setColumns(28);
+        passwordField.setName("login.password");
         passwordField.setPreferredSize(new Dimension(320, 42));
         form.add(passwordField, constraints);
         constraints.gridx = 0;
@@ -117,6 +123,8 @@ public final class LoginView extends JPanel {
         loginButton.setBackground(SwingTheme.TEAL);
         loginButton.setForeground(Color.WHITE);
         loginButton.setFocusPainted(false);
+        loginButton.setDefaultCapable(true);
+        loginButton.setToolTipText("Sign in with your campus account");
         loginButton.setPreferredSize(new Dimension(320, 44));
         form.add(loginButton, constraints);
 
@@ -146,6 +154,8 @@ public final class LoginView extends JPanel {
         add(south, BorderLayout.SOUTH);
 
         loginButton.addActionListener(e -> signIn());
+        emailField.addActionListener(e -> passwordField.requestFocusInWindow());
+        passwordField.addActionListener(e -> signIn());
         javax.swing.KeyStroke enter = javax.swing.KeyStroke.getKeyStroke("ENTER");
         getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(enter, "login");
         getActionMap().put("login", new javax.swing.AbstractAction() {
@@ -171,15 +181,18 @@ public final class LoginView extends JPanel {
             return;
         }
         statusLabel.setText("Signing in…");
+        loginButton.setText("Signing in…");
         ApiTask.run(
             () -> api.post("/auth/login", new LoginRequest(email, password), LoginResponse.class),
             response -> {
                 statusLabel.setText(" ");
+                loginButton.setText("Sign in");
                 passwordField.setText("");
                 session.setSession(response.accessToken(), response.user().toUserSummary());
             },
             error -> {
                 statusLabel.setText(" ");
+                loginButton.setText("Sign in");
                 UiSupport.showError(this, error);
             },
             loginButton
@@ -194,5 +207,9 @@ public final class LoginView extends JPanel {
     public void clearInputs() {
         emailField.setText("");
         passwordField.setText("");
+    }
+
+    JButton getLoginButton() {
+        return loginButton;
     }
 }

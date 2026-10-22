@@ -54,10 +54,14 @@ public final class SwingTheme {
         UIManager.put("Table.selectionForeground", NAVY);
         UIManager.put("Table.gridColor", new Color(237, 241, 245));
         UIManager.put("Table.rowHeight", 32);
+        UIManager.put("Table.showGrid", false);
+        UIManager.put("Table.intercellSpacing", new java.awt.Dimension(0, 1));
         UIManager.put("TableHeader.font", new FontUIResource("SansSerif", Font.BOLD, 12));
         UIManager.put("TableHeader.background", new Color(239, 243, 247));
         UIManager.put("TableHeader.foreground", NAVY);
+        UIManager.put("TableHeader.reorderingAllowed", false);
         UIManager.put("ScrollPane.background", SURFACE);
+        UIManager.put("ScrollPane.border", javax.swing.BorderFactory.createLineBorder(BORDER));
         UIManager.put("OptionPane.messageFont", body);
         UIManager.put("OptionPane.buttonFont", strong);
     }
