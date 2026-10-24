@@ -2,6 +2,7 @@ package edu.mec.studentportal.client;
 
 import edu.mec.studentportal.client.api.ClientConfig;
 import edu.mec.studentportal.client.ui.MainFrame;
+import edu.mec.studentportal.client.ui.SwingTheme;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -35,6 +36,7 @@ public final class ClientApplication {
         } catch (Exception exception) {
             System.out.println("System look and feel unavailable; using default.");
         }
+        SwingTheme.install();
 
         System.out.println("Student Portal client → API base URL: " + config.baseUrl());
         SwingUtilities.invokeLater(() -> {

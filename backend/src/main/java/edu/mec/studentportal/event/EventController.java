@@ -83,5 +83,4 @@ public class EventController {
     public EventResponse cancel(@PathVariable long eventId, Authentication authentication) {
         return eventService.cancel(eventId, CurrentUser.id(authentication));
     }
-
 }
