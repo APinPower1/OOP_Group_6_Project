@@ -78,6 +78,7 @@ class UiSnapshotTest {
         SessionContext anon = new SessionContext();
         LoginView login = new LoginView(NO_API, anon);
         writePng(login, 1280, 820, dir.resolve("login.png"));
+        writePng(login, 1060, 680, dir.resolve("login-minimum.png"));
 
         SessionContext student = new SessionContext();
         student.setSession("token", new UserSummary(1, "Asha Menon", "asha@mec.edu", Role.STUDENT, false));

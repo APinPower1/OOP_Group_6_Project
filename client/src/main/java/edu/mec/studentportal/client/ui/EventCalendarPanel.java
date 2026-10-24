@@ -368,14 +368,14 @@ public final class EventCalendarPanel extends JPanel {
                     h - pad * 2 - 1, 12, PortalTheme.ACCENT, 1.5f);
             } else if (!cell.inMonth()) {
                 UiKit.roundFill(g2, x + pad, y + pad, w - pad * 2, h - pad * 2, 12,
-                    new Color(0xEE, 0xF6, 0xEC));
+                    new Color(0xF6, 0xF6, 0xF8));
             } else if (isHovered) {
                 UiKit.roundFill(g2, x + pad, y + pad, w - pad * 2, h - pad * 2, 12,
-                    new Color(0xE7, 0xF4, 0xE9));
+                    new Color(0xFD, 0xF0, 0xF1));
             }
 
             Color dayColor = isSelected ? Color.WHITE
-                : cell.inMonth() ? PortalTheme.INK : new Color(0x9D, 0xB8, 0xA6);
+                : cell.inMonth() ? PortalTheme.INK : new Color(0xA6, 0xAA, 0xB2);
             g2.setColor(dayColor);
             g2.setFont((isToday || isSelected) ? PortalTheme.MD_BOLD : PortalTheme.SM);
             FontMetrics metrics = g2.getFontMetrics();
@@ -392,7 +392,7 @@ public final class EventCalendarPanel extends JPanel {
                 }
                 if (events.size() > visible) {
                     g2.setFont(PortalTheme.XS);
-                    g2.setColor(isSelected ? new Color(0xD4, 0xF5, 0xE4) : PortalTheme.MUTED);
+                    g2.setColor(isSelected ? new Color(0xFF, 0xE2, 0xE3) : PortalTheme.MUTED);
                     g2.drawString("+" + (events.size() - visible) + " more",
                         x + 12, chipY + 9);
                 }
@@ -458,7 +458,7 @@ public final class EventCalendarPanel extends JPanel {
                 @Override
                 protected void paintComponent(Graphics graphics) {
                     Glyph.CALENDAR.paint((Graphics2D) graphics, 0, 0, 44,
-                        new Color(0xBB, 0xD1, 0xC0));
+                        new Color(0xD9, 0xA2, 0xA5));
                 }
             };
             bigGlyph.setPreferredSize(new Dimension(44, 44));
@@ -513,7 +513,7 @@ public final class EventCalendarPanel extends JPanel {
         private final class EventCard extends JPanel {
             private EventCard(EventDto event) {
                 setOpaque(true);
-                setBackground(new Color(0xF4, 0xFA, 0xF4));
+                setBackground(new Color(0xFA, 0xF8, 0xF8));
                 setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
                 setAlignmentX(Component.LEFT_ALIGNMENT);
                 setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
@@ -566,17 +566,16 @@ public final class EventCalendarPanel extends JPanel {
 
     // ------------------------------------------------------------------ icon button
 
-    private static final class CircleIconButton extends JButton {
+    private static final class CircleIconButton extends UiKit.AnimatedButton {
         private final Glyph glyph;
 
         private CircleIconButton(Glyph glyph) {
+            super(glyph == Glyph.CHEVRON_LEFT ? "Previous month" : "Next month");
             this.glyph = glyph;
             setContentAreaFilled(false);
             setBorderPainted(false);
             setFocusPainted(false);
-            setRolloverEnabled(true);
             setPreferredSize(new Dimension(38, 38));
-            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         }
 
         @Override
@@ -587,22 +586,23 @@ public final class EventCalendarPanel extends JPanel {
                     RenderingHints.VALUE_ANTIALIAS_ON);
                 int w = getWidth();
                 int h = getHeight();
-                boolean hover = getModel().isRollover();
-                boolean pressed = getModel().isPressed();
-                Color bg = pressed ? new Color(0xC6, 0xEE, 0xD9)
-                    : hover ? PortalTheme.ACCENT_SOFT : Color.WHITE;
+                float hover = hoverAmount();
+                g2.translate(0, pressAmount() * 0.7);
+                Color bg = UiKit.blend(Color.WHITE, PortalTheme.ACCENT_SOFT,
+                    Math.max(hover, pressAmount()));
                 g2.setColor(bg);
                 g2.fillOval(1, 2, w - 2, h - 4);
-                g2.setColor(hover ? PortalTheme.ACCENT : PortalTheme.BORDER);
+                g2.setColor(UiKit.blend(PortalTheme.BORDER, PortalTheme.ACCENT, hover));
                 g2.setStroke(new java.awt.BasicStroke(1.3f));
                 g2.draw(new java.awt.geom.Ellipse2D.Double(1.5, 2.5, w - 3, h - 5));
                 if (!isEnabled()) {
                     glyph.paint(g2, (w - 17) / 2.0, (h - 19) / 2.0, 17,
-                        new Color(0xA7, 0xC0, 0xB1));
+                        new Color(0xA6, 0xAA, 0xB2));
                 } else {
                     glyph.paint(g2, (w - 17) / 2.0, (h - 19) / 2.0, 17,
-                        hover ? PortalTheme.ACCENT : PortalTheme.INK);
+                        UiKit.blend(PortalTheme.INK, PortalTheme.ACCENT, hover));
                 }
+                paintFocusRing(g2, w, h, h / 2.0);
             } finally {
                 g2.dispose();
             }

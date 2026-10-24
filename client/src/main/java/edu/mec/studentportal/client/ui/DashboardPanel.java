@@ -11,6 +11,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -19,9 +21,9 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
 /**
- * Shared chrome for the four role dashboards: white topbar with title and actions, a navy
- * sidebar ({@link SidebarTabs}) that hosts one content card per tab — including the shared
- * event calendar every role lands on — and a slim status footer.
+ * Shared chrome for the four role dashboards: a focused workspace header, bright navigation
+ * rail, one content card per tab — including the shared event calendar every role lands on —
+ * and a slim status footer.
  */
 abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
     protected final transient ApiClient api;
@@ -38,17 +40,17 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
         tabs = new SidebarTabs(session);
         tabs.addTab("Calendar", new EventCalendarPanel(api, session));
 
-        JPanel topbar = new JPanel(new BorderLayout(18, 0));
+        JPanel topbar = new JPanel(new BorderLayout(24, 0));
         topbar.setBackground(Color.WHITE);
         topbar.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 0, 1, 0, PortalTheme.HAIRLINE),
-            new EmptyBorder(15, 26, 15, 26)));
+            new EmptyBorder(17, 28, 17, 28)));
 
-        topbar.add(UiKit.sectionHeader("Student Portal", title), BorderLayout.WEST);
+        topbar.add(workspaceHeading(title), BorderLayout.WEST);
 
         JButton refreshButton = UiKit.ghostButton("Refresh all", Glyph.REFRESH);
         refreshButton.addActionListener(event -> refreshAll());
-        JButton profileButton = UiKit.ghostButton("Profile", Glyph.USERS);
+        JButton profileButton = UiKit.ghostButton("Account", Glyph.USERS);
         profileButton.addActionListener(event ->
             ProfileDialog.showProfile(this, api, session));
         JButton logoutButton = UiKit.darkButton("Log out", Glyph.LOGOUT);
@@ -58,19 +60,55 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
         actions.setOpaque(false);
         actions.add(refreshButton);
         actions.add(profileButton);
-        actions.add(logoutButton);
         actions.add(identityChip());
+        actions.add(logoutButton);
         topbar.add(actions, BorderLayout.EAST);
 
         statusLabel.setFont(PortalTheme.SM);
         statusLabel.setForeground(PortalTheme.MUTED);
         statusLabel.setOpaque(true);
         statusLabel.setBackground(Color.WHITE);
-        statusLabel.setBorder(new EmptyBorder(8, 26, 10, 26));
+        statusLabel.setBorder(new EmptyBorder(8, 28, 10, 28));
 
         add(topbar, BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
         add(statusLabel, BorderLayout.SOUTH);
+    }
+
+    private JComponent workspaceHeading(String title) {
+        JPanel heading = new JPanel();
+        heading.setOpaque(false);
+        heading.setLayout(new javax.swing.BoxLayout(heading, javax.swing.BoxLayout.Y_AXIS));
+
+        String fullName = "";
+        try {
+            UserSummary user = session == null ? null : session.getUser();
+            fullName = user == null ? "" : user.fullName();
+        } catch (RuntimeException ignored) {
+            // The dashboard remains useful even when identity data is temporarily unavailable.
+        }
+        String firstName = fullName.isBlank() ? "there" : fullName.trim().split("\\s+")[0];
+        int hour = java.time.LocalTime.now().getHour();
+        String greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon"
+            : "Good evening";
+
+        JLabel context = new JLabel(LocalDate.now().format(
+            DateTimeFormatter.ofPattern("EEEE, dd MMMM")).toUpperCase());
+        context.setFont(PortalTheme.EYEBROW);
+        context.setForeground(PortalTheme.ACCENT);
+        JLabel welcome = new JLabel(greeting + ", " + firstName);
+        welcome.setFont(PortalTheme.XL_BOLD);
+        welcome.setForeground(PortalTheme.INK);
+        JLabel detail = new JLabel(title + "  ·  Campus activity at a glance");
+        detail.setFont(PortalTheme.SM);
+        detail.setForeground(PortalTheme.MUTED);
+        context.setAlignmentX(0f);
+        welcome.setAlignmentX(0f);
+        detail.setAlignmentX(0f);
+        heading.add(context);
+        heading.add(welcome);
+        heading.add(detail);
+        return heading;
     }
 
     /** Avatar + name + role shown at the right edge of the topbar. */

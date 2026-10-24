@@ -23,11 +23,14 @@ import edu.mec.studentportal.client.dto.Role;
 import edu.mec.studentportal.client.dto.VenueCreateRequest;
 import edu.mec.studentportal.client.dto.VenueResponse;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -106,23 +109,25 @@ public final class AdminDashboard extends DashboardPanel {
     }
 
     private JPanel buildUsersTab() {
-        JButton apply = UiKit.ghostButton("Apply filters");
+        JButton apply = UiKit.ghostButton("Apply filters", edu.mec.studentportal.client.ui.theme.Glyph.SEARCH);
         apply.addActionListener(e -> refreshUsers());
         userSearch.field().addActionListener(e -> refreshUsers());
-        JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filters.add(new JLabel("Role:"));
-        filters.add(userRoleFilter);
-        filters.add(new JLabel("Status:"));
-        filters.add(userEnabledFilter);
-        filters.add(new JLabel("Search:"));
-        filters.add(userSearch.field());
-        filters.add(new JLabel("Page:"));
-        filters.add(userPage);
+        styleFilterCombo(userRoleFilter, 132);
+        styleFilterCombo(userEnabledFilter, 132);
+        styleFilterSpinner(userPage);
+        apply.setPreferredSize(new Dimension(128, 42));
+
+        JPanel filters = UiKit.toolbarSurface(new FlowLayout(FlowLayout.LEFT, 12, 0),
+            12, 14, 12, 14);
+        filters.add(filterControl("Role", userRoleFilter, 112));
+        filters.add(filterControl("Status", userEnabledFilter, 118));
+        filters.add(filterControl("Search users", userSearch.field(), 210));
+        filters.add(filterControl("Page", userPage, 78));
         filters.add(apply);
         userRoleFilter.addActionListener(e -> refreshUsers());
         userEnabledFilter.addActionListener(e -> refreshUsers());
 
-        JButton create = UiKit.ghostButton("Create user");
+        JButton create = UiKit.gradientButton("Create user", edu.mec.studentportal.client.ui.theme.Glyph.PLUS);
         create.addActionListener(e -> createUser(create));
         JButton edit = UiKit.ghostButton("Edit user");
         edit.addActionListener(e -> editUser(edit));
@@ -139,7 +144,9 @@ public final class AdminDashboard extends DashboardPanel {
             }
             refreshUsers();
         });
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        actions.setOpaque(false);
+        actions.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 4, 2, 4));
         actions.add(create);
         actions.add(edit);
         actions.add(enable);
@@ -148,9 +155,13 @@ public final class AdminDashboard extends DashboardPanel {
         actions.add(next);
 
         JPanel panel = new JPanel(new BorderLayout());
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(filters, BorderLayout.NORTH);
-        top.add(actions, BorderLayout.SOUTH);
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        top.setLayout(new javax.swing.BoxLayout(top, javax.swing.BoxLayout.Y_AXIS));
+        filters.setAlignmentX(LEFT_ALIGNMENT);
+        actions.setAlignmentX(LEFT_ALIGNMENT);
+        top.add(filters);
+        top.add(actions);
         panel.add(top, BorderLayout.NORTH);
         panel.add(new JScrollPane(usersTable), BorderLayout.CENTER);
         return panel;
@@ -169,7 +180,7 @@ public final class AdminDashboard extends DashboardPanel {
         JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> moderationDetails());
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttons = actionBar();
         buttons.add(new JLabel("Status:"));
         buttons.add(moderationFilter);
         buttons.add(refresh);
@@ -196,7 +207,7 @@ public final class AdminDashboard extends DashboardPanel {
         JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshClubs());
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttons = actionBar();
         buttons.add(create);
         buttons.add(edit);
         buttons.add(deactivate);
@@ -217,7 +228,7 @@ public final class AdminDashboard extends DashboardPanel {
         JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshAnnouncements());
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttons = actionBar();
         buttons.add(post);
         buttons.add(archive);
         buttons.add(refresh);
@@ -231,16 +242,16 @@ public final class AdminDashboard extends DashboardPanel {
     private JPanel buildReportsTab() {
         JButton refresh = UiKit.ghostButton("Refresh report");
         refresh.addActionListener(e -> refreshReport());
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(refresh, BorderLayout.NORTH);
-        top.add(reportSummary, BorderLayout.CENTER);
 
         JTable table = new JTable(UiSupport.tableModel(
             "Event ID", "Title", "Status", "Capacity", "Confirmed", "Cancelled",
             "Feedback", "Avg rating"));
         table.putClientProperty("terminateEditOnKeyStroke", Boolean.TRUE);
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(top, BorderLayout.NORTH);
+        JPanel reportToolbar = UiKit.toolbarSurface(new BorderLayout(0, 8), 12, 14, 12, 14);
+        reportToolbar.add(refresh, BorderLayout.NORTH);
+        reportToolbar.add(reportSummary, BorderLayout.CENTER);
+        panel.add(reportToolbar, BorderLayout.NORTH);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         reportTable = table;
         return panel;
@@ -307,7 +318,7 @@ public final class AdminDashboard extends DashboardPanel {
         help.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.XS);
         help.setForeground(edu.mec.studentportal.client.ui.theme.PortalTheme.MUTED);
 
-        JPanel inputRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel inputRow = actionBar();
         inputRow.add(new JLabel("New venue:"));
         inputRow.add(venueNameField);
         inputRow.add(add);
@@ -326,6 +337,54 @@ public final class AdminDashboard extends DashboardPanel {
         panel.add(top, BorderLayout.NORTH);
         panel.add(new JScrollPane(venuesTable), BorderLayout.CENTER);
         return panel;
+    }
+
+    private static JPanel actionBar() {
+        return UiKit.toolbarSurface(new FlowLayout(FlowLayout.LEFT, 8, 0), 10, 12, 10, 12);
+    }
+
+    private static JPanel filterControl(String caption, JComponent control, int width) {
+        JPanel group = new JPanel();
+        group.setOpaque(false);
+        group.setLayout(new javax.swing.BoxLayout(group, javax.swing.BoxLayout.Y_AXIS));
+        JLabel label = new JLabel(caption.toUpperCase());
+        label.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.EYEBROW);
+        label.setForeground(edu.mec.studentportal.client.ui.theme.PortalTheme.MUTED);
+        label.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 2, 5, 0));
+        Dimension size = new Dimension(width, 42);
+        control.setPreferredSize(size);
+        control.setMinimumSize(new Dimension(Math.min(width, 76), 42));
+        control.setMaximumSize(new Dimension(width, 42));
+        group.add(label);
+        group.add(control);
+        return group;
+    }
+
+    private static void styleFilterCombo(JComboBox<String> combo, int width) {
+        combo.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.BODY);
+        combo.setForeground(edu.mec.studentportal.client.ui.theme.PortalTheme.INK);
+        combo.setBackground(Color.WHITE);
+        combo.setOpaque(true);
+        combo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(
+                edu.mec.studentportal.client.ui.theme.PortalTheme.BORDER, 1, true),
+            javax.swing.BorderFactory.createEmptyBorder(0, 8, 0, 6)));
+        combo.setPreferredSize(new Dimension(width, 42));
+    }
+
+    private static void styleFilterSpinner(JSpinner spinner) {
+        spinner.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.BODY);
+        spinner.setBorder(javax.swing.BorderFactory.createLineBorder(
+            edu.mec.studentportal.client.ui.theme.PortalTheme.BORDER, 1, true));
+        spinner.setPreferredSize(new Dimension(92, 42));
+        JComponent editor = spinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor defaultEditor) {
+            defaultEditor.getTextField().setFont(
+                edu.mec.studentportal.client.ui.theme.PortalTheme.BODY);
+            defaultEditor.getTextField().setHorizontalAlignment(javax.swing.JTextField.LEFT);
+            defaultEditor.getTextField().setBorder(
+                javax.swing.BorderFactory.createEmptyBorder(0, 8, 0, 2));
+        }
     }
 
     private void refreshVenues() {
@@ -908,10 +967,11 @@ public final class AdminDashboard extends DashboardPanel {
 
     /** Small text field bundled with its action component access for filters. */
     private static final class JTextFieldWithAction {
-        private final javax.swing.JTextField field = new javax.swing.JTextField(14);
+        private final UiKit.HintTextField field = UiKit.hintField("Name or email");
 
         private JTextFieldWithAction() {
-            edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(field);
+            field.setPreferredSize(new Dimension(210, 42));
+            field.setMinimumSize(new Dimension(180, 42));
         }
 
         javax.swing.JTextField field() {
