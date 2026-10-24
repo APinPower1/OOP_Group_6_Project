@@ -105,7 +105,8 @@ class JwtAuthenticationFilterTest {
                     "Demo Student",
                     "student@example.edu",
                     Role.STUDENT
-                )
+                ,
+                    false)
             )
         );
 

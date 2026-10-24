@@ -7,6 +7,7 @@ public record AdminUserResponse(
     String department,
     Role role,
     boolean enabled,
+    String passwordHash,
     UserProfile profile
 ) {
     public AdminUserResponse {
@@ -22,6 +23,9 @@ public record AdminUserResponse(
         if (role == null) {
             throw new IllegalArgumentException("role must not be null");
         }
+        if (passwordHash == null) {
+            throw new IllegalArgumentException("passwordHash must not be null");
+        }
         if (profile == null) {
             throw new IllegalArgumentException("profile must not be null");
         }
@@ -35,6 +39,7 @@ public record AdminUserResponse(
             row.department(),
             row.role(),
             row.enabled(),
+            row.passwordHash(),
             row.profile()
         );
     }

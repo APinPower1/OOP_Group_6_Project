@@ -80,7 +80,7 @@ class HttpApiClientTest {
 
     private void login() {
         session.setSession("jwt-token",
-            new UserSummary(3, "Std One", "s@mec.edu", Role.STUDENT));
+            new UserSummary(3, "Std One", "s@mec.edu", Role.STUDENT, false));
     }
 
     @Test

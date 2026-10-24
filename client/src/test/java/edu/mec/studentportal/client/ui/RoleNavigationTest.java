@@ -69,7 +69,7 @@ class RoleNavigationTest {
     }
 
     private void loginAs(Role role) {
-        session.setSession("token", new UserSummary(1, "One User", "one@mec.edu", role));
+        session.setSession("token", new UserSummary(1, "One User", "one@mec.edu", role, false));
     }
 
     @Test

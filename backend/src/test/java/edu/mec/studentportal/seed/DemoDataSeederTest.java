@@ -80,6 +80,7 @@ class DemoDataSeederTest {
                 command.department(),
                 command.role(),
                 true,
+                "$2a$10$hash",
                 command.profile()
             );
         });
@@ -138,6 +139,7 @@ class DemoDataSeederTest {
                 command.department(),
                 command.role(),
                 true,
+                "$2a$10$hash",
                 command.profile()
             );
         });

@@ -5,6 +5,7 @@ import edu.mec.studentportal.client.api.ClientConfig;
 import edu.mec.studentportal.client.api.HttpApiClient;
 import edu.mec.studentportal.client.api.SessionContext;
 import edu.mec.studentportal.client.dto.Role;
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -26,13 +27,14 @@ public final class MainFrame extends JFrame {
 
     public MainFrame(ClientConfig config) {
         super("Government Model Engineering College, Thrikkakara — Student Portal");
+        UiKit.install();
         this.session = new SessionContext();
         this.api = new HttpApiClient(config, session);
         this.loginView = new LoginView(api, session);
         getRootPane().setDefaultButton(loginView.getLoginButton());
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setMinimumSize(new Dimension(1000, 680));
+        setMinimumSize(new Dimension(1060, 680));
 
         cardPanel.add(loginView, "login");
         add(cardPanel, BorderLayout.CENTER);
@@ -71,6 +73,21 @@ public final class MainFrame extends JFrame {
         if (dashboard instanceof Refreshable refreshable) {
             refreshable.refreshAll();
         }
+        maybeForcePasswordChange();
+    }
+
+    /**
+     * First-login gate: when the session says {@code mustChangePassword}, a modal
+     * dialog blocks the dashboard until the user sets a new password or logs out.
+     * There is no email reset flow — admins reset in person, so this is the only
+     * client-side enforcement of the flag.
+     */
+    private void maybeForcePasswordChange() {
+        edu.mec.studentportal.client.dto.UserSummary user = session.getUser();
+        if (user == null || !user.mustChangePassword()) {
+            return;
+        }
+        ProfileDialog.showForced(this, api, session);
     }
 
     private void showLogin() {

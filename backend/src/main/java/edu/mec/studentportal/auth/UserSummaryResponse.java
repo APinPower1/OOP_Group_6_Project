@@ -6,7 +6,8 @@ public record UserSummaryResponse(
     long id,
     String fullName,
     String email,
-    Role role
+    Role role,
+    boolean mustChangePassword
 ) {
     public UserSummaryResponse {
         if (fullName == null) {

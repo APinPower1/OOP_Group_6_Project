@@ -1,5 +1,6 @@
 package edu.mec.studentportal.client.ui;
 
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import edu.mec.studentportal.client.api.ApiClient;
 import edu.mec.studentportal.client.api.ApiTask;
@@ -13,6 +14,7 @@ import edu.mec.studentportal.client.dto.FeedbackDto;
 import edu.mec.studentportal.client.dto.FeedbackSummaryDto;
 import edu.mec.studentportal.client.dto.RosterDto;
 import edu.mec.studentportal.client.dto.RosterEntry;
+import edu.mec.studentportal.client.dto.VenueResponse;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.time.LocalDateTime;
@@ -32,6 +34,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public final class OrganizerDashboard extends DashboardPanel {
     private static final TypeReference<List<EventDto>> EVENT_LIST = new TypeReference<>() {};
+    private static final TypeReference<List<VenueResponse>> VENUE_LIST = new TypeReference<>() {};
     private static final TypeReference<List<AnnouncementDto>> ANNOUNCEMENT_LIST =
         new TypeReference<>() {};
     private static final TypeReference<List<FeedbackDto>> FEEDBACK_LIST = new TypeReference<>() {};
@@ -77,15 +80,15 @@ public final class OrganizerDashboard extends DashboardPanel {
     }
 
     private JPanel buildEventsTab() {
-        JButton create = new JButton("Create proposal");
+        JButton create = UiKit.ghostButton("Create proposal");
         create.addActionListener(e -> createEvent(create));
-        JButton edit = new JButton("Edit / resubmit");
+        JButton edit = UiKit.ghostButton("Edit / resubmit");
         edit.addActionListener(e -> editSelected(edit));
-        JButton cancel = new JButton("Cancel event");
+        JButton cancel = UiKit.ghostButton("Cancel event");
         cancel.addActionListener(e -> cancelSelected(cancel));
-        JButton details = new JButton("Details");
+        JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> showDetails());
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshEvents());
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -102,7 +105,7 @@ public final class OrganizerDashboard extends DashboardPanel {
     }
 
     private JPanel buildRosterTab() {
-        JButton load = new JButton("Load roster");
+        JButton load = UiKit.ghostButton("Load roster");
         load.addActionListener(e -> loadRoster(load));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(new javax.swing.JLabel("Event:"));
@@ -116,11 +119,11 @@ public final class OrganizerDashboard extends DashboardPanel {
     }
 
     private JPanel buildAnnouncementsTab() {
-        JButton post = new JButton("Post announcement");
+        JButton post = UiKit.ghostButton("Post announcement");
         post.addActionListener(e -> postAnnouncement(post));
-        JButton archive = new JButton("Archive");
+        JButton archive = UiKit.ghostButton("Archive");
         archive.addActionListener(e -> archiveSelected(archive));
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshAnnouncements());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(post);
@@ -136,7 +139,7 @@ public final class OrganizerDashboard extends DashboardPanel {
     private JPanel buildFeedbackTab() {
         feedbackSummaryArea.setEditable(false);
         feedbackSummaryArea.setLineWrap(true);
-        JButton load = new JButton("Load feedback");
+        JButton load = UiKit.ghostButton("Load feedback");
         load.addActionListener(e -> loadFeedback(load));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(new javax.swing.JLabel("Event:"));
@@ -224,42 +227,31 @@ public final class OrganizerDashboard extends DashboardPanel {
     }
 
     private void createEvent(JButton trigger) {
-        String[] labels = {
-            "Title", "Description", "Venue", "Start time (yyyy-MM-ddTHH:mm)",
-            "End time (yyyy-MM-ddTHH:mm)", "Capacity"
-        };
-        String[] initial = { "", "", "", "", "", "50" };
-        String[] values = UiSupport.form(this, "Create event proposal", labels, initial);
-        if (values == null) {
-            return;
-        }
-        if (values[0].isEmpty() || values[1].isEmpty() || values[2].isEmpty()
-            || values[3].isEmpty() || values[4].isEmpty()) {
-            UiSupport.info(this, "Title, description, venue and times are required.");
-            return;
-        }
-        int capacity;
-        try {
-            capacity = Integer.parseInt(values[5]);
-        } catch (NumberFormatException exception) {
-            UiSupport.info(this, "Capacity must be a number.");
-            return;
-        }
-        EventRequest request = new EventRequest(
-            values[0], values[1], values[2],
-            LocalDateTime.parse(values[3]), LocalDateTime.parse(values[4]), capacity
-        );
-        status("Creating proposal…");
-        ApiTask.run(
-            () -> api.post("/events", request, EventDto.class),
-            created -> {
-                status("Proposal created.");
-                UiSupport.info(this, "Proposal #" + created.id() + " submitted for approval.");
-                refreshEvents();
-            },
-            this::error,
-            trigger
-        );
+        withVenues(trigger, null, "Create event proposal", values -> {
+            int capacity;
+            try {
+                capacity = Integer.parseInt(values[5]);
+            } catch (NumberFormatException exception) {
+                UiSupport.info(this, "Capacity must be a number.");
+                return;
+            }
+            EventRequest request = new EventRequest(
+                values[0], values[1], values[2],
+                LocalDateTime.parse(values[3]), LocalDateTime.parse(values[4]), capacity
+            );
+            status("Creating proposal…");
+            ApiTask.run(
+                () -> api.post("/events", request, EventDto.class),
+                created -> {
+                    status("Proposal created.");
+                    UiSupport.info(this,
+                        "Proposal #" + created.id() + " submitted for approval.");
+                    refreshEvents();
+                },
+                this::error,
+                trigger
+            );
+        });
     }
 
     private void editSelected(JButton trigger) {
@@ -268,36 +260,72 @@ public final class OrganizerDashboard extends DashboardPanel {
             status("Select an event first.");
             return;
         }
-        String[] labels = {
-            "Title", "Description", "Venue", "Start time (yyyy-MM-ddTHH:mm)",
-            "End time (yyyy-MM-ddTHH:mm)", "Capacity"
-        };
-        String[] initial = {
-            event.title(), event.description(), event.venue(),
-            event.startTime() == null ? "" : event.startTime().toString(),
-            event.endTime() == null ? "" : event.endTime().toString(),
-            String.valueOf(event.capacity())
-        };
-        String[] values = UiSupport.form(this, "Edit proposal #" + event.id(), labels, initial);
-        if (values == null) {
-            return;
-        }
-        EventRequest request = new EventRequest(
-            values[0], values[1], values[2],
-            LocalDateTime.parse(values[3]), LocalDateTime.parse(values[4]),
-            Integer.parseInt(values[5])
-        );
-        status("Saving proposal…");
+        withVenues(trigger, event, "Edit proposal #" + event.id(), values -> {
+            EventRequest request = new EventRequest(
+                values[0], values[1], values[2],
+                LocalDateTime.parse(values[3]), LocalDateTime.parse(values[4]),
+                Integer.parseInt(values[5])
+            );
+            status("Saving proposal…");
+            ApiTask.run(
+                () -> api.put("/events/" + event.id(), request, EventDto.class),
+                updated -> {
+                    status("Proposal updated.");
+                    UiSupport.info(this, "Proposal #" + updated.id() + " resubmitted.");
+                    refreshEvents();
+                },
+                this::error,
+                trigger
+            );
+        });
+    }
+
+    /**
+     * Loads the admin-managed venue list, then opens the event form dialog. If the
+     * list cannot be fetched (or is empty) the venue combo falls back to free text so
+     * event creation never blocks on the venue service.
+     */
+    private void withVenues(JButton trigger, EventDto event, String title,
+        java.util.function.Consumer<String[]> onFormValues) {
+        status("Loading venues…");
         ApiTask.run(
-            () -> api.put("/events/" + event.id(), request, EventDto.class),
-            updated -> {
-                status("Proposal updated.");
-                UiSupport.info(this, "Proposal #" + updated.id() + " resubmitted.");
-                refreshEvents();
+            () -> api.get("/venues", VENUE_LIST),
+            venues -> {
+                List<String> names = venues == null ? List.of() : venues.stream()
+                    .map(VenueResponse::name)
+                    .filter(name -> name != null && !name.isBlank())
+                    .toList();
+                status(names.isEmpty()
+                    ? "No managed venues — type a venue."
+                    : "Venues: " + names.size() + " available.");
+                openEventForm(event, title, names, names.isEmpty(), onFormValues);
             },
-            this::error,
+            failure -> {
+                status("Venue list unavailable — you can type a venue.");
+                openEventForm(event, title, List.of(), true, onFormValues);
+            },
             trigger
         );
+    }
+
+    private void openEventForm(EventDto event, String title, List<String> venues,
+        boolean venuesEditable, java.util.function.Consumer<String[]> onFormValues) {
+        String[] initial;
+        if (event == null) {
+            initial = new String[] { "", "", "", "", "", "50" };
+        } else {
+            initial = new String[] {
+                event.title(), event.description(), event.venue(),
+                event.startTime() == null ? "" : event.startTime().toString(),
+                event.endTime() == null ? "" : event.endTime().toString(),
+                String.valueOf(event.capacity())
+            };
+        }
+        String[] values = EventFormDialog.show(this, title, initial, venues,
+            venuesEditable);
+        if (values != null) {
+            onFormValues.accept(values);
+        }
     }
 
     private void cancelSelected(JButton trigger) {

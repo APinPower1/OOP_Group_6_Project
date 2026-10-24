@@ -42,6 +42,7 @@ class UserRowMapperTest {
         when(resultSet.getString("department")).thenReturn("Computing");
         when(resultSet.getString("role")).thenReturn("ORGANIZER");
         when(resultSet.getBoolean("enabled")).thenReturn(false);
+        when(resultSet.getBoolean("must_change_password")).thenReturn(true);
 
         assertThat(UserDao.mapAccount(resultSet)).isEqualTo(
             new UserAccount(
@@ -52,7 +53,8 @@ class UserRowMapperTest {
                 "Computing",
                 Role.ORGANIZER,
                 false
-            )
+            ,
+                true)
         );
     }
 

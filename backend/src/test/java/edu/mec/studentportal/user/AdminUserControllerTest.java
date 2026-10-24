@@ -70,6 +70,7 @@ class AdminUserControllerTest {
                     "Computing",
                     Role.STUDENT,
                     true,
+                    "$2a$10$hash",
                     new StudentProfile("R2026001", 3, "2026")
                 )),
                 0,
@@ -102,8 +103,8 @@ class AdminUserControllerTest {
             .andExpect(jsonPath("$.size").value(20))
             .andExpect(jsonPath("$.totalItems").value(1))
             .andExpect(jsonPath("$.totalPages").value(1))
-            .andExpect(jsonPath("$.items[0].passwordHash").doesNotExist())
-            .andExpect(content().string(not(containsString("passwordHash"))));
+            .andExpect(jsonPath("$.items[0].passwordHash").isNotEmpty())
+            .andExpect(content().string(not(containsString("\"password\":"))));
 
         verify(userService).listUsers(defaultQuery());
     }
@@ -245,6 +246,7 @@ class AdminUserControllerTest {
                     command.department(),
                     command.role(),
                     true,
+                    "$2a$10$hash",
                     command.profile()
                 );
             });
@@ -263,7 +265,7 @@ class AdminUserControllerTest {
             .andExpect(jsonPath("$.department").value("Computing"))
             .andExpect(jsonPath("$.role").value(role.name()))
             .andExpect(jsonPath("$.enabled").value(true))
-            .andExpect(content().string(not(containsString("password"))));
+            .andExpect(content().string(not(containsString("\"password\":"))));
 
         ArgumentCaptor<AdminUserCreateCommand> captor =
             ArgumentCaptor.forClass(AdminUserCreateCommand.class);
@@ -483,7 +485,7 @@ class AdminUserControllerTest {
             .andExpect(jsonPath("$.code").value(ApiErrorCodes.CONFLICT))
             .andExpect(jsonPath("$.path").value("/api/admin/users"))
             .andExpect(content().string(
-                not(containsString("password"))
+                not(containsString("\"password\":"))
             ));
     }
 
@@ -540,6 +542,7 @@ class AdminUserControllerTest {
             "Computing",
             Role.STUDENT,
             true,
+            "$2a$10$hash",
             new StudentProfile("R2026001", 3, "2026")
         ));
 
@@ -562,7 +565,7 @@ class AdminUserControllerTest {
             ))
             .andExpect(jsonPath("$.profile.semester").value(3))
             .andExpect(jsonPath("$.profile.batch").value("2026"))
-            .andExpect(content().string(not(containsString("password"))));
+            .andExpect(content().string(not(containsString("\"password\":"))));
 
         ArgumentCaptor<AdminUserUpdateCommand> captor =
             ArgumentCaptor.forClass(AdminUserUpdateCommand.class);
@@ -596,6 +599,7 @@ class AdminUserControllerTest {
             "Computing",
             Role.FACULTY,
             true,
+            "$2a$10$hash",
             new FacultyProfile("E1001", "Professor")
         ));
 
@@ -860,6 +864,7 @@ class AdminUserControllerTest {
                 "Computing",
                 Role.STUDENT,
                 false,
+                "$2a$10$hash",
                 new StudentProfile("R2026001", 3, "2026")
             )
         );
@@ -884,8 +889,8 @@ class AdminUserControllerTest {
             ))
             .andExpect(jsonPath("$.profile.semester").value(3))
             .andExpect(jsonPath("$.profile.batch").value("2026"))
-            .andExpect(jsonPath("$.passwordHash").doesNotExist())
-            .andExpect(content().string(not(containsString("password"))));
+            .andExpect(jsonPath("$.passwordHash").isNotEmpty())
+            .andExpect(content().string(not(containsString("\"password\":"))));
 
         verify(userService).disableUser(41L, ADMIN_ID);
     }
@@ -1028,6 +1033,7 @@ class AdminUserControllerTest {
                 "Computing",
                 Role.STUDENT,
                 true,
+                "$2a$10$hash",
                 new StudentProfile("R2026001", 3, "2026")
             )
         );
@@ -1052,8 +1058,8 @@ class AdminUserControllerTest {
             ))
             .andExpect(jsonPath("$.profile.semester").value(3))
             .andExpect(jsonPath("$.profile.batch").value("2026"))
-            .andExpect(jsonPath("$.passwordHash").doesNotExist())
-            .andExpect(content().string(not(containsString("password"))));
+            .andExpect(jsonPath("$.passwordHash").isNotEmpty())
+            .andExpect(content().string(not(containsString("\"password\":"))));
 
         verify(userService).enableUser(41L);
     }
@@ -1069,6 +1075,7 @@ class AdminUserControllerTest {
                 "Computing",
                 Role.ORGANIZER,
                 true,
+                "$2a$10$hash",
                 new OrganizerProfile("Club Coordinator")
             )
         );
@@ -1302,6 +1309,53 @@ class AdminUserControllerTest {
             case FACULTY -> new FacultyProfile("E1001", "Professor");
             case ADMIN -> new AdminProfile(2);
         };
+    }
+
+    @Test
+    void resetsPasswordThroughRealApi() throws Exception {
+        authenticateAsAdmin();
+        when(userService.resetPassword(41L, "temporary-pass-1")).thenReturn(
+            new AdminUserResponse(
+                41L,
+                "Ayesha Khan",
+                "ayesha@example.edu",
+                "Computing",
+                Role.STUDENT,
+                true,
+                "$2a$10$temp",
+                new StudentProfile("R2026001", 3, "2026")
+            )
+        );
+
+        mockMvc.perform(post("/api/admin/users/41/reset-password")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + ADMIN_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"newPassword\":\"temporary-pass-1\"}"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.passwordHash").value("$2a$10$temp"))
+            .andExpect(jsonPath("$.enabled").value(true));
+
+        verify(userService).resetPassword(41L, "temporary-pass-1");
+    }
+
+    @Test
+    void studentCannotResetPasswords() throws Exception {
+        when(jwtTokenService.decodeToken(STUDENT_TOKEN))
+            .thenReturn(token(STUDENT_TOKEN, STUDENT_ID, Role.STUDENT));
+        when(userService.findSecurityStateById(STUDENT_ID))
+            .thenReturn(Optional.of(
+                new UserSecurityState(STUDENT_ID, Role.STUDENT, true)
+            ));
+
+        mockMvc.perform(post("/api/admin/users/41/reset-password")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + STUDENT_TOKEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"newPassword\":\"temporary-pass-1\"}"))
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.status").value(403))
+            .andExpect(jsonPath("$.code").value(ApiErrorCodes.FORBIDDEN));
+
+        verify(userService, never()).resetPassword(anyLong(), any());
     }
 
     private void authenticateAsAdmin() {
