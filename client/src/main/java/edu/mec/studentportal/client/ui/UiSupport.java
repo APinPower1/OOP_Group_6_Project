@@ -82,6 +82,7 @@ public final class UiSupport {
             fields[i] = new javax.swing.JTextField(
                 initialValues == null || initialValues[i] == null ? "" : initialValues[i]
             );
+            edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(fields[i]);
             panel.add(fields[i]);
         }
         int result = JOptionPane.showConfirmDialog(

@@ -70,4 +70,18 @@ class CurrentUserTest {
         assertThatThrownBy(() -> CurrentUser.id(authentication))
             .isInstanceOf(ApiException.class);
     }
+
+    @Test
+    void rejectsNonPositiveUserId() {
+        Authentication authentication = UsernamePasswordAuthenticationToken.authenticated(
+            "0",
+            null,
+            List.of()
+        );
+
+        assertThatThrownBy(() -> CurrentUser.id(authentication))
+            .isInstanceOf(ApiException.class)
+            .extracting(exception -> ((ApiException) exception).getCode())
+            .isEqualTo("UNAUTHENTICATED");
+    }
 }

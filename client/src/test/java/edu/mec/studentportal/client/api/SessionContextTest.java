@@ -30,7 +30,7 @@ class SessionContextTest {
 
     @Test
     void storesSessionAndExposesRole() {
-        session.setSession("jwt-token", new UserSummary(7, "A B", "a@b.edu", Role.STUDENT));
+        session.setSession("jwt-token", new UserSummary(7, "A B", "a@b.edu", Role.STUDENT, false));
         assertTrue(session.isLoggedIn());
         assertEquals("jwt-token", session.getToken());
         assertEquals(Role.STUDENT, session.getRole());
@@ -40,7 +40,7 @@ class SessionContextTest {
     @Test
     void rejectsBlankTokenOrNullUser() {
         assertThrows(IllegalArgumentException.class,
-            () -> session.setSession("  ", new UserSummary(1, "A", "a@b.edu", Role.ADMIN)));
+            () -> session.setSession("  ", new UserSummary(1, "A", "a@b.edu", Role.ADMIN, false)));
         assertThrows(IllegalArgumentException.class,
             () -> session.setSession("token", null));
         assertFalse(session.isLoggedIn());
@@ -50,7 +50,7 @@ class SessionContextTest {
     void clearSessionIsIdempotentAndNotifiesOnce() {
         AtomicInteger notified = new AtomicInteger();
         session.addListener(s -> notified.incrementAndGet());
-        session.setSession("jwt-token", new UserSummary(1, "A", "a@b.edu", Role.ADMIN));
+        session.setSession("jwt-token", new UserSummary(1, "A", "a@b.edu", Role.ADMIN, false));
         assertEquals(1, notified.get());
 
         session.clearSession();
@@ -65,7 +65,7 @@ class SessionContextTest {
         AtomicInteger notified = new AtomicInteger();
         SessionContext.Listener listener = s -> notified.incrementAndGet();
         session.addListener(listener);
-        session.setSession("jwt-token", new UserSummary(1, "A", "a@b.edu", Role.ADMIN));
+        session.setSession("jwt-token", new UserSummary(1, "A", "a@b.edu", Role.ADMIN, false));
         session.removeListener(listener);
         session.clearSession();
         assertEquals(1, notified.get());
@@ -74,5 +74,25 @@ class SessionContextTest {
     @Test
     void rejectsNullListener() {
         assertThrows(IllegalArgumentException.class, () -> session.addListener(null));
+    }
+
+    @Test
+    void refreshUserReplacesUserWithoutFiringListeners() {
+        session.setSession("jwt-token",
+            new UserSummary(7, "A B", "a@b.edu", Role.STUDENT, true));
+        AtomicInteger events = new AtomicInteger();
+        session.addListener(s -> events.incrementAndGet());
+
+        session.refreshUser(new UserSummary(7, "A B", "a@b.edu", Role.STUDENT, false));
+
+        assertFalse(session.getUser().mustChangePassword());
+        assertEquals(0, events.get(),
+            "refreshUser must not rebuild the open dashboard");
+    }
+
+    @Test
+    void refreshUserRequiresActiveSession() {
+        assertThrows(IllegalStateException.class, () -> session.refreshUser(
+            new UserSummary(1, "A", "a@b.edu", Role.ADMIN, false)));
     }
 }

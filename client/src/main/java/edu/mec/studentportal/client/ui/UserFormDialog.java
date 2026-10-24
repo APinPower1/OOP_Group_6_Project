@@ -45,6 +45,11 @@ final class UserFormDialog {
     private final JTextField adminLevel = new JTextField("1");
 
     private UserFormDialog(boolean create) {
+        for (JTextField field : java.util.List.of(fullName, email, department, password,
+            studentRoll, studentSemester, studentBatch, organizerDesignation,
+            facultyEmployeeId, facultyDesignation, adminLevel)) {
+            edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(field);
+        }
         JPanel identity = new JPanel(new GridLayout(0, 2, 6, 4));
         identity.add(new JLabel("Full name"));
         identity.add(fullName);

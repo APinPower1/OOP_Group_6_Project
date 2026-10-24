@@ -24,6 +24,7 @@ class UserDaoUpdateTest {
             "Computing",
             Role.STUDENT,
             true,
+            "$2a$10$hash",
             new StudentProfile("R2026001", 3, "2026")
         );
         jdbcTemplate.queryResult = List.of(row);

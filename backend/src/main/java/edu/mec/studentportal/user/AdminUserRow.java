@@ -7,6 +7,7 @@ record AdminUserRow(
     String department,
     Role role,
     boolean enabled,
+    String passwordHash,
     UserProfile profile
 ) {
     AdminUserRow {
@@ -21,6 +22,9 @@ record AdminUserRow(
         }
         if (role == null) {
             throw new IllegalArgumentException("role must not be null");
+        }
+        if (passwordHash == null) {
+            throw new IllegalArgumentException("passwordHash must not be null");
         }
         if (profile == null) {
             throw new IllegalArgumentException("profile must not be null");

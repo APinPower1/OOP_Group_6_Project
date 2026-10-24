@@ -63,6 +63,52 @@ class DtoMappingTest {
     }
 
     @Test
+    void loginResponseCarriesMustChangePasswordFlag() throws Exception {
+        String json = """
+            {"accessToken":"t","tokenType":"Bearer","expiresInSeconds":60,
+             "user":{"id":9,"fullName":"Temp User","email":"t@mec.edu",
+                     "role":"STUDENT","mustChangePassword":true}}""";
+
+        LoginResponse response = mapper.readValue(json, LoginResponse.class);
+
+        assertTrue(response.user().toUserSummary().mustChangePassword());
+        assertEquals(9, response.user().toUserSummary().id());
+    }
+
+    @Test
+    void mustChangePasswordDefaultsFalseWhenAbsent() throws Exception {
+        String json = """
+            {"user":{"id":7,"fullName":"Std One","email":"s@mec.edu","role":"STUDENT"}}""";
+
+        LoginResponse response = mapper.readValue(json, LoginResponse.class);
+
+        assertEquals(false, response.user().toUserSummary().mustChangePassword());
+    }
+
+    @Test
+    void venueResponseDeserializesContractJson() throws Exception {
+        String json = "{\"id\":3,\"name\":\"Seminar Hall A\"}";
+
+        VenueResponse venue = mapper.readValue(json, VenueResponse.class);
+
+        assertEquals(3, venue.id());
+        assertEquals("Seminar Hall A", venue.name());
+    }
+
+    @Test
+    void adminUserDtoCarriesPasswordHash() throws Exception {
+        String json = """
+            {"id":41,"fullName":"Ayesha Khan","email":"a@mec.edu","department":"Computing",
+             "role":"STUDENT","enabled":true,"passwordHash":"$2a$10$abcdef",
+             "profile":{"rollNumber":"R1"}}""";
+
+        AdminUserDto user = mapper.readValue(json, AdminUserDto.class);
+
+        assertEquals("$2a$10$abcdef", user.passwordHash());
+        assertTrue(user.enabled());
+    }
+
+    @Test
     void participationReportDeserializesNestedShape() throws Exception {
         String json = """
             {"events":{"total":4,"pendingApproval":1,"approved":2,"rejected":1,"cancelled":0},

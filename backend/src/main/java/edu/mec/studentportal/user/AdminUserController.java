@@ -71,6 +71,17 @@ public class AdminUserController {
         return userService.enableUser(parseUserId(userId));
     }
 
+    @PostMapping("/{userId}/reset-password")
+    public AdminUserResponse resetPassword(
+        @PathVariable String userId,
+        @RequestBody AdminUserResetPasswordRequest request
+    ) {
+        return userService.resetPassword(
+            parseUserId(userId),
+            request == null ? null : request.newPassword()
+        );
+    }
+
     private static long parseUserId(String rawUserId) {
         long userId;
         try {

@@ -13,7 +13,8 @@ public record UserAccount(
     String passwordHash,
     String department,
     Role role,
-    boolean enabled
+    boolean enabled,
+    boolean mustChangePassword
 ) {
     public UserAccount {
         if (fullName == null) {

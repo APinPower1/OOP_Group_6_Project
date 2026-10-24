@@ -16,12 +16,14 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class UserDao {
     private static final String SELECT_USER_COLUMNS = """
-        SELECT id, full_name, email, password_hash, department, role, enabled
+        SELECT id, full_name, email, password_hash, department, role, enabled,
+               must_change_password
         FROM users
         """;
 
     private static final String SELECT_ADMIN_USER_COLUMNS = """
         SELECT u.id, u.full_name, u.email, u.department, u.role, u.enabled,
+               u.password_hash, u.must_change_password,
                sp.user_id IS NOT NULL AS has_student_profile,
                sp.roll_number, sp.semester, sp.batch,
                op.user_id IS NOT NULL AS has_organizer_profile,
@@ -56,6 +58,11 @@ public class UserDao {
     private static final String ENABLE_USER = """
         UPDATE users
         SET enabled = TRUE
+        WHERE id = ?
+        """;
+    private static final String UPDATE_PASSWORD = """
+        UPDATE users
+        SET password_hash = ?, must_change_password = ?
         WHERE id = ?
         """;
     private static final String UPDATE_STUDENT_PROFILE = """
@@ -298,6 +305,17 @@ public class UserDao {
         return jdbcTemplate.update(ENABLE_USER, userId);
     }
 
+    public int updatePassword(long userId, String passwordHash,
+        boolean mustChangePassword) {
+        if (userId <= 0 || passwordHash == null) {
+            throw new IllegalArgumentException(
+                "password update values must not be null"
+            );
+        }
+        return jdbcTemplate.update(UPDATE_PASSWORD, passwordHash,
+            mustChangePassword, userId);
+    }
+
     public void updateProfile(long userId, UserProfile profile) {
         if (profile == null) {
             throw new IllegalArgumentException("profile must not be null");
@@ -371,7 +389,8 @@ public class UserDao {
             resultSet.getString("password_hash"),
             resultSet.getString("department"),
             parseRole(resultSet.getString("role")),
-            resultSet.getBoolean("enabled")
+            resultSet.getBoolean("enabled"),
+            resultSet.getBoolean("must_change_password")
         );
     }
 
@@ -444,6 +463,7 @@ public class UserDao {
             resultSet.getString("department"),
             role,
             resultSet.getBoolean("enabled"),
+            resultSet.getString("password_hash"),
             profile
         );
     }

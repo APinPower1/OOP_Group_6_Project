@@ -104,6 +104,7 @@ public class UserService implements UserAccountLookup {
                 command.department(),
                 command.role(),
                 true,
+                passwordHash,
                 command.profile()
             );
         } catch (DuplicateKeyException exception) {
@@ -174,6 +175,7 @@ public class UserService implements UserAccountLookup {
             command.department(),
             command.role(),
             existing.enabled(),
+            existing.passwordHash(),
             command.profile()
         );
     }
@@ -209,6 +211,7 @@ public class UserService implements UserAccountLookup {
             existing.department(),
             existing.role(),
             false,
+            existing.passwordHash(),
             existing.profile()
         );
     }
@@ -235,6 +238,37 @@ public class UserService implements UserAccountLookup {
             existing.department(),
             existing.role(),
             true,
+            existing.passwordHash(),
+            existing.profile()
+        );
+    }
+
+    /**
+     * Admin-only password reset (verified in person with a college ID — there is
+     * no email flow). The new password is stored as a BCrypt hash only and is
+     * flagged so the user must change it on their next login.
+     */
+    @Transactional
+    public AdminUserResponse resetPassword(long userId, String newPassword) {
+        String passwordHash =
+            passwordEncoder.encode(PasswordPolicy.requireNewPassword(newPassword));
+        AdminUserRow existing = userDao.findAdminUserByIdForUpdate(userId)
+            .orElseThrow(UserService::userNotFound);
+
+        int updated = userDao.updatePassword(userId, passwordHash, true);
+        if (updated != 1) {
+            throw new IllegalStateException(
+                "Password reset did not affect a row for user " + userId
+            );
+        }
+        return new AdminUserResponse(
+            userId,
+            existing.fullName(),
+            existing.email(),
+            existing.department(),
+            existing.role(),
+            existing.enabled(),
+            passwordHash,
             existing.profile()
         );
     }

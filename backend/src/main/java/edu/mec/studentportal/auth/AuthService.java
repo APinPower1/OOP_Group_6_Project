@@ -20,15 +20,18 @@ public class AuthService {
     private final UserAccountLookup userAccountLookup;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenService jwtTokenService;
+    private final edu.mec.studentportal.user.UserDao userDao;
 
     public AuthService(
         UserAccountLookup userAccountLookup,
         PasswordEncoder passwordEncoder,
-        JwtTokenService jwtTokenService
+        JwtTokenService jwtTokenService,
+        edu.mec.studentportal.user.UserDao userDao
     ) {
         this.userAccountLookup = userAccountLookup;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenService = jwtTokenService;
+        this.userDao = userDao;
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -56,7 +59,8 @@ public class AuthService {
             account.id(),
             account.fullName(),
             account.email(),
-            account.role()
+            account.role(),
+            account.mustChangePassword()
         );
 
         return LoginResponse.bearer(
@@ -82,7 +86,62 @@ public class AuthService {
             account.id(),
             account.fullName(),
             account.email(),
-            account.role()
+            account.role(),
+            account.mustChangePassword()
+        );
+    }
+
+    /**
+     * Self-service password change (used by the forced first-login flow and the
+     * profile screen). Requires the current password; clears the must-change
+     * flag on success. There is no email-based reset — forgotten passwords are
+     * reset in person by an admin.
+     */
+    public UserSummaryResponse changePassword(long userId,
+        ChangePasswordRequest request) {
+        if (userId <= 0) {
+            throw authenticationRequired();
+        }
+        if (request == null
+            || request.currentPassword() == null
+            || request.currentPassword().isBlank()
+            || request.newPassword() == null
+            || request.newPassword().isBlank()) {
+            throw badRequest(
+                "currentPassword and newPassword are required."
+            );
+        }
+        UserAccount account = userAccountLookup.findById(userId)
+            .orElseThrow(AuthService::authenticationRequired);
+        if (!account.enabled()) {
+            throw authenticationRequired();
+        }
+        if (!passwordEncoder.matches(
+            request.currentPassword(), account.passwordHash())) {
+            throw badRequest("Current password is incorrect.");
+        }
+        String passwordHash = passwordEncoder.encode(
+            edu.mec.studentportal.user.PasswordPolicy
+                .requireNewPassword(request.newPassword()));
+        if (userDao.updatePassword(account.id(), passwordHash, false) != 1) {
+            throw new IllegalStateException(
+                "Password change did not affect a row for user " + userId
+            );
+        }
+        return new UserSummaryResponse(
+            account.id(),
+            account.fullName(),
+            account.email(),
+            account.role(),
+            false
+        );
+    }
+
+    private static ApiException badRequest(String message) {
+        return new ApiException(
+            HttpStatus.BAD_REQUEST,
+            ApiErrorCodes.INVALID_REQUEST,
+            message
         );
     }
 

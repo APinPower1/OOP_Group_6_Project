@@ -29,4 +29,12 @@ public class AuthController {
     ) {
         return authService.getCurrentUser(currentUser.id());
     }
+
+    @PostMapping("/change-password")
+    public UserSummaryResponse changePassword(
+        @AuthenticationPrincipal UserSecurityState currentUser,
+        @RequestBody ChangePasswordRequest request
+    ) {
+        return authService.changePassword(currentUser.id(), request);
+    }
 }

@@ -3,47 +3,130 @@ package edu.mec.studentportal.client.ui;
 import edu.mec.studentportal.client.api.ApiClient;
 import edu.mec.studentportal.client.api.ApiException;
 import edu.mec.studentportal.client.api.SessionContext;
+import edu.mec.studentportal.client.dto.UserSummary;
+import edu.mec.studentportal.client.ui.theme.Glyph;
+import edu.mec.studentportal.client.ui.theme.PortalTheme;
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTabbedPane;
+import javax.swing.border.EmptyBorder;
 
-/** Shared chrome for the four role dashboards: title, identity, refresh/logout, tabs, status. */
+/**
+ * Shared chrome for the four role dashboards: white topbar with title and actions, a navy
+ * sidebar ({@link SidebarTabs}) that hosts one content card per tab — including the shared
+ * event calendar every role lands on — and a slim status footer.
+ */
 abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
     protected final transient ApiClient api;
     protected final transient SessionContext session;
-    protected final JTabbedPane tabs = new JTabbedPane();
+    protected final SidebarTabs tabs;
     private final JLabel statusLabel = new JLabel(" ");
 
     protected DashboardPanel(String title, ApiClient api, SessionContext session) {
-        super(new BorderLayout(8, 8));
+        super(new BorderLayout());
         this.api = api;
         this.session = session;
+        setBackground(PortalTheme.CANVAS);
 
-        JButton refreshButton = new JButton("Refresh all");
-        refreshButton.addActionListener(e -> refreshAll());
-        JButton logoutButton = new JButton("Logout");
-        logoutButton.addActionListener(e -> session.clearSession());
+        tabs = new SidebarTabs(session);
+        tabs.addTab("Calendar", new EventCalendarPanel(api, session));
 
-        String identity = session.getUser() == null
-            ? ""
-            : session.getUser().fullName() + "  ·  " + session.getRole();
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel topbar = new JPanel(new BorderLayout(18, 0));
+        topbar.setBackground(Color.WHITE);
+        topbar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 1, 0, PortalTheme.HAIRLINE),
+            new EmptyBorder(15, 26, 15, 26)));
+
+        topbar.add(UiKit.sectionHeader("Student Portal", title), BorderLayout.WEST);
+
+        JButton refreshButton = UiKit.ghostButton("Refresh all", Glyph.REFRESH);
+        refreshButton.addActionListener(event -> refreshAll());
+        JButton profileButton = UiKit.ghostButton("Profile", Glyph.USERS);
+        profileButton.addActionListener(event ->
+            ProfileDialog.showProfile(this, api, session));
+        JButton logoutButton = UiKit.darkButton("Log out", Glyph.LOGOUT);
+        logoutButton.addActionListener(event -> session.clearSession());
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        actions.setOpaque(false);
         actions.add(refreshButton);
+        actions.add(profileButton);
         actions.add(logoutButton);
+        actions.add(identityChip());
+        topbar.add(actions, BorderLayout.EAST);
 
-        JPanel north = new JPanel(new BorderLayout());
-        JPanel titleBlock = new JPanel(new BorderLayout());
-        titleBlock.add(new JLabel("<html><b>" + title + "</b></html>"), BorderLayout.NORTH);
-        titleBlock.add(new JLabel(identity), BorderLayout.SOUTH);
-        north.add(titleBlock, BorderLayout.WEST);
-        north.add(actions, BorderLayout.EAST);
+        statusLabel.setFont(PortalTheme.SM);
+        statusLabel.setForeground(PortalTheme.MUTED);
+        statusLabel.setOpaque(true);
+        statusLabel.setBackground(Color.WHITE);
+        statusLabel.setBorder(new EmptyBorder(8, 26, 10, 26));
 
-        add(north, BorderLayout.NORTH);
+        add(topbar, BorderLayout.NORTH);
         add(tabs, BorderLayout.CENTER);
         add(statusLabel, BorderLayout.SOUTH);
+    }
+
+    /** Avatar + name + role shown at the right edge of the topbar. */
+    private JComponent identityChip() {
+        UserSummary user = null;
+        try {
+            user = session == null ? null : session.getUser();
+        } catch (RuntimeException ignored) {
+            user = null;
+        }
+        String fullName = user == null ? "" : user.fullName();
+        String role = "";
+        try {
+            if (session != null && session.isLoggedIn() && session.getRole() != null) {
+                role = session.getRole().name();
+            }
+        } catch (RuntimeException ignored) {
+            role = "";
+        }
+
+        JPanel chip = new JPanel(new BorderLayout(10, 0));
+        chip.setOpaque(false);
+        chip.setBorder(new EmptyBorder(0, 0, 0, 2));
+        chip.add(UiKit.avatar(fullName.isEmpty() ? "?" : fullName, 34), BorderLayout.WEST);
+
+        JPanel texts = new JPanel(new BorderLayout(0, 1));
+        texts.setOpaque(false);
+        JLabel name = new JLabel(fullName.isEmpty() ? "Signed out" : fullName);
+        name.setFont(PortalTheme.SM_BOLD);
+        name.setForeground(PortalTheme.INK);
+        JLabel roleLabel = new JLabel(role.isEmpty() ? " " : role);
+        roleLabel.setFont(PortalTheme.XS);
+        roleLabel.setForeground(PortalTheme.MUTED);
+        texts.add(name, BorderLayout.NORTH);
+        texts.add(roleLabel, BorderLayout.SOUTH);
+        chip.add(texts, BorderLayout.CENTER);
+
+        JPanel wrap = new JPanel(new BorderLayout(14, 0));
+        wrap.setOpaque(false);
+        wrap.add(paddedDivider(), BorderLayout.WEST);
+        wrap.add(chip, BorderLayout.CENTER);
+        wrap.setMaximumSize(new Dimension(240, 48));
+        return wrap;
+    }
+
+    private static JComponent paddedDivider() {
+        JComponent divider = new JComponent() {
+            @Override
+            protected void paintComponent(java.awt.Graphics graphics) {
+                graphics.setColor(PortalTheme.HAIRLINE);
+                graphics.drawLine(getWidth() / 2, 2, getWidth() / 2, getHeight() - 2);
+            }
+        };
+        divider.setPreferredSize(new Dimension(9, 34));
+        divider.setMaximumSize(new Dimension(9, 34));
+        return divider;
     }
 
     protected void status(String message) {

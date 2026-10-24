@@ -2,6 +2,10 @@ package edu.mec.studentportal.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -12,6 +16,7 @@ import edu.mec.studentportal.api.ApiException;
 import edu.mec.studentportal.security.JwtTokenService;
 import edu.mec.studentportal.user.Role;
 import edu.mec.studentportal.user.UserAccount;
+import edu.mec.studentportal.user.UserDao;
 import edu.mec.studentportal.user.UserAccountLookup;
 import java.time.Instant;
 import java.util.Optional;
@@ -47,6 +52,9 @@ class AuthServiceTest {
     @Mock
     private JwtTokenService jwtTokenService;
 
+    @Mock
+    private UserDao userDao;
+
     @InjectMocks
     private AuthService authService;
 
@@ -67,7 +75,8 @@ class AuthServiceTest {
                 "Demo Student",
                 EMAIL,
                 Role.STUDENT
-            )
+            ,
+                false)
         );
         verify(passwordEncoder).matches(PASSWORD, PASSWORD_HASH);
         verify(jwtTokenService).createToken(USER_ID, Role.STUDENT);
@@ -201,7 +210,8 @@ class AuthServiceTest {
                 "Demo Student",
                 EMAIL,
                 Role.FACULTY
-            )
+            ,
+                false)
         );
         verify(userAccountLookup).findById(USER_ID);
         verifyNoInteractions(passwordEncoder, jwtTokenService);
@@ -293,6 +303,86 @@ class AuthServiceTest {
         }
     }
 
+    @Test
+    void changesPasswordWhenCurrentPasswordMatches() {
+        UserAccount account = account(true, Role.STUDENT);
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(PASSWORD, PASSWORD_HASH)).thenReturn(true);
+        when(passwordEncoder.encode("brand-new-secret-1"))
+            .thenReturn("$2a$10$newhash");
+        when(userDao.updatePassword(USER_ID, "$2a$10$newhash", false))
+            .thenReturn(1);
+
+        UserSummaryResponse response = authService.changePassword(
+            USER_ID,
+            new ChangePasswordRequest(PASSWORD, "brand-new-secret-1")
+        );
+
+        assertThat(response.mustChangePassword()).isFalse();
+        assertThat(response.id()).isEqualTo(USER_ID);
+        assertThat(response.email()).isEqualTo(EMAIL);
+        verify(userDao).updatePassword(USER_ID, "$2a$10$newhash", false);
+    }
+
+    @Test
+    void rejectsChangeWhenCurrentPasswordIsWrong() {
+        UserAccount account = account(true, Role.STUDENT);
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account));
+        when(passwordEncoder.matches("wrong-password", PASSWORD_HASH))
+            .thenReturn(false);
+
+        Throwable thrown = catchThrowable(() -> authService.changePassword(
+            USER_ID,
+            new ChangePasswordRequest("wrong-password", "brand-new-secret-1")
+        ));
+
+        assertThat(thrown).isInstanceOf(ApiException.class);
+        ApiException apiException = (ApiException) thrown;
+        assertThat(apiException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(apiException.getCode()).isEqualTo(ApiErrorCodes.INVALID_REQUEST);
+        assertThat(apiException.getMessage()).isEqualTo("Current password is incorrect.");
+        verify(userDao, never()).updatePassword(anyLong(), any(), anyBoolean());
+    }
+
+    @Test
+    void rejectsChangeWithTooShortNewPassword() {
+        UserAccount account = account(true, Role.STUDENT);
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account));
+        when(passwordEncoder.matches(PASSWORD, PASSWORD_HASH)).thenReturn(true);
+
+        Throwable thrown = catchThrowable(() -> authService.changePassword(
+            USER_ID,
+            new ChangePasswordRequest(PASSWORD, "short")
+        ));
+
+        assertThat(thrown).isInstanceOf(ApiException.class);
+        ApiException apiException = (ApiException) thrown;
+        assertThat(apiException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(apiException.getMessage())
+            .isEqualTo("password must be between 8 and 72 UTF-8 bytes.");
+        verify(userDao, never()).updatePassword(anyLong(), any(), anyBoolean());
+    }
+
+    @Test
+    void rejectsChangeWhenAccountIsDisabled() {
+        UserAccount account = account(false, Role.STUDENT);
+        when(userAccountLookup.findById(USER_ID))
+            .thenReturn(Optional.of(account));
+
+        Throwable thrown = catchThrowable(() -> authService.changePassword(
+            USER_ID,
+            new ChangePasswordRequest(PASSWORD, "brand-new-secret-1")
+        ));
+
+        assertThat(thrown).isInstanceOf(ApiException.class);
+        assertThat(((ApiException) thrown).getStatus())
+            .isEqualTo(HttpStatus.UNAUTHORIZED);
+        verify(userDao, never()).updatePassword(anyLong(), any(), anyBoolean());
+    }
+
     private static UserAccount account(boolean enabled, Role role) {
         return new UserAccount(
             USER_ID,
@@ -302,7 +392,8 @@ class AuthServiceTest {
             "Computer Science",
             role,
             enabled
-        );
+        ,
+            false);
     }
 
     private static Jwt token(Role role) {

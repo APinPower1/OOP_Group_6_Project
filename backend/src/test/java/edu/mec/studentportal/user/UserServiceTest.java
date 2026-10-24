@@ -1,8 +1,10 @@
 package edu.mec.studentportal.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -10,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.mec.studentportal.api.ApiErrorCodes;
 import edu.mec.studentportal.api.ApiException;
@@ -141,6 +144,7 @@ class UserServiceTest {
                     "Computing",
                     Role.STUDENT,
                     true,
+                    "$2a$10$hash",
                     new StudentProfile("R2026001", 3, "2026")
                 )
             ));
@@ -186,7 +190,10 @@ class UserServiceTest {
             userService.listUsers(query)
         );
 
-        assertThat(json).doesNotContain("password");
+        JsonNode node = new ObjectMapper().readTree(json);
+        assertThat(node.get("items").get(0).get("passwordHash").asText())
+            .startsWith("$2");
+        assertThat(node.get("items").get(0).has("password")).isFalse();
     }
 
     @Test
@@ -213,6 +220,7 @@ class UserServiceTest {
                 "Computing",
                 Role.STUDENT,
                 true,
+                "$2a$10$hashed",
                 new StudentProfile("R2026001", 3, "2026")
             ));
         verify(userDao).insertProfile(51L, command.profile());
@@ -235,7 +243,9 @@ class UserServiceTest {
             userService.createUser(command)
         );
 
-        assertThat(json).doesNotContain("password");
+        JsonNode node = new ObjectMapper().readTree(json);
+        assertThat(node.get("passwordHash").asText()).startsWith("$2");
+        assertThat(node.has("password")).isFalse();
     }
 
     @Test
@@ -330,6 +340,7 @@ class UserServiceTest {
                 "Computing",
                 role,
                 true,
+                "$2a$10$hash",
                 command.profile()
             ));
         verify(userDao).updateProfile(41L, command.profile());
@@ -646,6 +657,7 @@ class UserServiceTest {
                 "Computing",
                 Role.STUDENT,
                 false,
+                "$2a$10$hash",
                 new StudentProfile("R2026001", 3, "2026")
             ));
         verify(userDao).disableUser(41L);
@@ -675,7 +687,9 @@ class UserServiceTest {
             userService.disableUser(41L, 99L)
         );
 
-        assertThat(json).doesNotContain("password");
+        JsonNode node = new ObjectMapper().readTree(json);
+        assertThat(node.get("passwordHash").asText()).startsWith("$2");
+        assertThat(node.has("password")).isFalse();
     }
 
     @Test
@@ -763,6 +777,7 @@ class UserServiceTest {
                 "Computing",
                 Role.STUDENT,
                 false,
+                "$2a$10$hash",
                 new StudentProfile("R2026001", 3, "2026")
             ));
         verify(userDao, never()).disableUser(anyLong());
@@ -830,6 +845,7 @@ class UserServiceTest {
                 "Computing",
                 Role.STUDENT,
                 true,
+                "$2a$10$hash",
                 new StudentProfile("R2026001", 3, "2026")
             ));
         verify(userDao).enableUser(41L);
@@ -859,7 +875,9 @@ class UserServiceTest {
             userService.enableUser(41L)
         );
 
-        assertThat(json).doesNotContain("password");
+        JsonNode node = new ObjectMapper().readTree(json);
+        assertThat(node.get("passwordHash").asText()).startsWith("$2");
+        assertThat(node.has("password")).isFalse();
     }
 
     @Test
@@ -938,6 +956,51 @@ class UserServiceTest {
             .isTrue();
     }
 
+    @Test
+    void adminResetStoresHashAndForcesChangeOnNextLogin() {
+        when(userDao.findAdminUserByIdForUpdate(41L))
+            .thenReturn(Optional.of(rowFor(Role.STUDENT, true)));
+        when(passwordEncoder.encode("temporary-pass-1"))
+            .thenReturn("$2a$10$temp");
+        when(userDao.updatePassword(41L, "$2a$10$temp", true)).thenReturn(1);
+
+        AdminUserResponse response =
+            userService.resetPassword(41L, "temporary-pass-1");
+
+        assertThat(response.passwordHash()).isEqualTo("$2a$10$temp");
+        assertThat(response.enabled()).isTrue();
+        verify(userDao).updatePassword(41L, "$2a$10$temp", true);
+    }
+
+    @Test
+    void adminResetRejectsPasswordThatViolatesPolicy() {
+        Throwable thrown =
+            catchThrowable(() -> userService.resetPassword(41L, "short"));
+
+        assertThat(thrown).isInstanceOf(ApiException.class);
+        ApiException apiException = (ApiException) thrown;
+        assertThat(apiException.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(apiException.getCode()).isEqualTo(ApiErrorCodes.INVALID_REQUEST);
+        assertThat(apiException.getMessage())
+            .isEqualTo("password must be between 8 and 72 UTF-8 bytes.");
+        verify(userDao, never()).updatePassword(anyLong(), any(), anyBoolean());
+        verify(userDao, never()).findAdminUserByIdForUpdate(anyLong());
+    }
+
+    @Test
+    void adminResetFailsForUnknownUser() {
+        when(userDao.findAdminUserByIdForUpdate(77L)).thenReturn(Optional.empty());
+
+        Throwable thrown =
+            catchThrowable(() -> userService.resetPassword(77L, "temporary-pass-1"));
+
+        assertThat(thrown).isInstanceOf(ApiException.class);
+        ApiException apiException = (ApiException) thrown;
+        assertThat(apiException.getStatus()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(apiException.getCode()).isEqualTo(ApiErrorCodes.NOT_FOUND);
+        verify(userDao, never()).updatePassword(anyLong(), any(), anyBoolean());
+    }
+
     private static AdminUserRow rowFor(Role role, boolean enabled) {
         return new AdminUserRow(
             41L,
@@ -946,6 +1009,7 @@ class UserServiceTest {
             "Computing",
             role,
             enabled,
+            "$2a$10$hash",
             profileFor(role)
         );
     }
@@ -988,6 +1052,7 @@ class UserServiceTest {
             "Computing",
             Role.STUDENT,
             true,
+            "$2a$10$hash",
             new StudentProfile("R2026001", 3, "2026")
         );
     }
@@ -1001,6 +1066,7 @@ class UserServiceTest {
             "Computing",
             Role.STUDENT,
             true
-        );
+        ,
+            false);
     }
 }

@@ -44,6 +44,12 @@ These passwords are disposable local-demo fixtures, not secrets; rotate or delet
 - `SERVER_PORT`, default `8080`
 - `DEMO_SEED`, set to `true` once to seed local demo accounts (see above); leave unset otherwise
 
+Keep the same `JWT_SECRET` across backend restarts. Changing it invalidates every token issued
+with the previous secret and causes open clients to be signed out. Generate a secret once for
+local development, store it in your local user environment or another untracked secret store,
+and never commit it. After changing a persistent user environment variable, open a new terminal
+before starting the backend.
+
 ## Bootstrap the first local administrator
 
 The account bootstrap is a one-time local-development operation. It requires the explicit

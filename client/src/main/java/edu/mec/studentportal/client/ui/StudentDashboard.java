@@ -1,5 +1,6 @@
 package edu.mec.studentportal.client.ui;
 
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import edu.mec.studentportal.client.api.ApiClient;
 import edu.mec.studentportal.client.api.ApiTask;
@@ -68,8 +69,8 @@ public final class StudentDashboard extends DashboardPanel {
     private final JComboBox<EventChoice> feedbackEvents = new JComboBox<>();
     private final JSpinner feedbackRating = new JSpinner(new SpinnerNumberModel(5, 1, 5, 1));
     private final JTextArea feedbackComments = new JTextArea(3, 32);
-    private final JButton feedbackSubmit = new JButton("Submit feedback");
-    private final JButton feedbackSummary = new JButton("Show summary");
+    private final JButton feedbackSubmit = UiKit.ghostButton("Submit feedback");
+    private final JButton feedbackSummary = UiKit.ghostButton("Show summary");
 
     public StudentDashboard(ApiClient api, SessionContext session) {
         super("Student Dashboard", api, session);
@@ -93,13 +94,13 @@ public final class StudentDashboard extends DashboardPanel {
 
     private JPanel buildEventsTab() {
         JTable table = events.table();
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshEvents());
-        JButton details = new JButton("Details");
+        JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> showEventDetails(table));
-        JButton register = new JButton("Register");
+        JButton register = UiKit.ghostButton("Register");
         register.addActionListener(e -> registerSelected(table, register));
-        JButton cancelSeat = new JButton("Cancel my seat");
+        JButton cancelSeat = UiKit.ghostButton("Cancel my seat");
         cancelSeat.addActionListener(e -> cancelSelectedSeat(table, cancelSeat));
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -116,9 +117,9 @@ public final class StudentDashboard extends DashboardPanel {
 
     private JPanel buildRegistrationsTab() {
         JTable table = registrations.table();
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshRegistrations());
-        JButton cancel = new JButton("Cancel selected");
+        JButton cancel = UiKit.ghostButton("Cancel selected");
         cancel.addActionListener(e -> cancelFromHistory(table, cancel));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(refresh);
@@ -132,13 +133,13 @@ public final class StudentDashboard extends DashboardPanel {
 
     private JPanel buildClubsTab() {
         JTable table = clubs.table();
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshClubs());
-        JButton details = new JButton("Details");
+        JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> showClubDetails(table));
-        JButton join = new JButton("Join");
+        JButton join = UiKit.ghostButton("Join");
         join.addActionListener(e -> changeMembership(table, join, true));
-        JButton leave = new JButton("Leave");
+        JButton leave = UiKit.ghostButton("Leave");
         leave.addActionListener(e -> changeMembership(table, leave, false));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(refresh);
@@ -154,9 +155,9 @@ public final class StudentDashboard extends DashboardPanel {
 
     private JPanel buildAnnouncementsTab() {
         JTable table = announcements.table();
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshAnnouncements());
-        JButton details = new JButton("Details");
+        JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> showAnnouncementDetails(table));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(refresh);
@@ -170,9 +171,9 @@ public final class StudentDashboard extends DashboardPanel {
 
     private JPanel buildNotificationsTab() {
         JTable table = notifications.table();
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshNotifications());
-        JButton markRead = new JButton("Mark read");
+        JButton markRead = UiKit.ghostButton("Mark read");
         markRead.addActionListener(e -> markNotificationRead(table));
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(refresh);
@@ -199,7 +200,7 @@ public final class StudentDashboard extends DashboardPanel {
 
         feedbackSubmit.addActionListener(e -> submitFeedback());
         feedbackSummary.addActionListener(e -> showFeedbackSummary());
-        JButton refresh = new JButton("Refresh events");
+        JButton refresh = UiKit.ghostButton("Refresh events");
         refresh.addActionListener(e -> refreshFeedbackChoices());
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttons.add(refresh);
