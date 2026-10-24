@@ -50,6 +50,9 @@ public final class LoginView extends JPanel {
         this.api = api;
         this.session = session;
         setBackground(PortalTheme.CANVAS);
+        // stable component names so tests (and tools) can find the fields
+        emailField.setName("login.email");
+        passwordField.setName("login.password");
 
         add(heroPanel, BorderLayout.WEST);
 
@@ -218,6 +221,10 @@ public final class LoginView extends JPanel {
     public void clearInputs() {
         emailField.setText("");
         passwordField.setText("");
+    }
+
+    JButton getLoginButton() {
+        return loginButton;
     }
 
     private static Box.Filler spacer(int height) {

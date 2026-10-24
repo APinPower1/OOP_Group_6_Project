@@ -26,11 +26,12 @@ public final class MainFrame extends JFrame {
     private final JPanel cardPanel = new JPanel(cards);
 
     public MainFrame(ClientConfig config) {
-        super("Student Portal with Event Management System");
+        super("Government Model Engineering College, Thrikkakara — Student Portal");
         UiKit.install();
         this.session = new SessionContext();
         this.api = new HttpApiClient(config, session);
         this.loginView = new LoginView(api, session);
+        getRootPane().setDefaultButton(loginView.getLoginButton());
 
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1060, 680));
@@ -47,7 +48,7 @@ public final class MainFrame extends JFrame {
         }));
 
         cards.show(cardPanel, "login");
-        setTitle("Student Portal — signed out");
+        setTitle("MEC Thrikkakara — Student Portal");
     }
 
     public SessionContext getSession() {
@@ -55,6 +56,7 @@ public final class MainFrame extends JFrame {
     }
 
     private void showDashboard(Role role) {
+        getRootPane().setDefaultButton(null);
         String key = role.name();
         for (java.awt.Component component : cardPanel.getComponents()) {
             if (component.getName() != null && component.getName().equals(key)) {
@@ -67,7 +69,7 @@ public final class MainFrame extends JFrame {
         cardPanel.add(dashboard, key);
         cardPanel.revalidate();
         cards.show(cardPanel, key);
-        setTitle("Student Portal — " + session.getUser().fullName() + " (" + role + ")");
+        setTitle("MEC Portal — " + session.getUser().fullName() + " (" + role + ")");
         if (dashboard instanceof Refreshable refreshable) {
             refreshable.refreshAll();
         }
@@ -89,6 +91,7 @@ public final class MainFrame extends JFrame {
     }
 
     private void showLogin() {
+        getRootPane().setDefaultButton(loginView.getLoginButton());
         for (java.awt.Component component : cardPanel.getComponents()) {
             if (component != loginView) {
                 cardPanel.remove(component);
@@ -98,7 +101,7 @@ public final class MainFrame extends JFrame {
         cards.show(cardPanel, "login");
         loginView.clearInputs();
         loginView.showStatus("Signed out.");
-        setTitle("Student Portal — signed out");
+        setTitle("MEC Thrikkakara — Student Portal");
     }
 
     /** Implemented by dashboards so the frame can trigger an initial data load. */
