@@ -11,8 +11,6 @@ import edu.mec.studentportal.client.dto.EventRequest;
 import edu.mec.studentportal.client.dto.EventStatus;
 import edu.mec.studentportal.client.dto.FeedbackDto;
 import edu.mec.studentportal.client.dto.FeedbackSummaryDto;
-import edu.mec.studentportal.client.dto.RosterDto;
-import edu.mec.studentportal.client.dto.RosterEntry;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.time.LocalDateTime;
@@ -42,10 +40,7 @@ public final class OrganizerDashboard extends DashboardPanel {
     private final JTable eventsTable = new JTable(eventsModel);
     private List<EventDto> eventRows = List.of();
 
-    private final JComboBox<EventDto> rosterEvent = new JComboBox<>();
-    private final DefaultTableModel rosterModel = UiSupport.tableModel(
-        "Reg ID", "Student ID", "Name", "Roll", "Status", "Ticket", "Registered"
-    );
+    private final OrganizerRegistrationRosterPanel rosterPanel;
 
     private final DefaultTableModel announcementsModel = UiSupport.tableModel(
         "ID", "Title", "Audience", "Status", "Created"
@@ -61,6 +56,7 @@ public final class OrganizerDashboard extends DashboardPanel {
 
     public OrganizerDashboard(ApiClient api, SessionContext session) {
         super("Organizer Dashboard", api, session);
+        rosterPanel = new OrganizerRegistrationRosterPanel(api, session);
         eventsTable.setAutoCreateRowSorter(true);
         eventsTable.setFillsViewportHeight(true);
         tabs.addTab("My events", buildEventsTab());
@@ -73,7 +69,6 @@ public final class OrganizerDashboard extends DashboardPanel {
     public void refreshAll() {
         refreshEvents();
         refreshAnnouncements();
-        reloadEventCombos();
     }
 
     private JPanel buildEventsTab() {
@@ -102,17 +97,7 @@ public final class OrganizerDashboard extends DashboardPanel {
     }
 
     private JPanel buildRosterTab() {
-        JButton load = new JButton("Load roster");
-        load.addActionListener(e -> loadRoster(load));
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttons.add(new javax.swing.JLabel("Event:"));
-        buttons.add(rosterEvent);
-        buttons.add(load);
-
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(buttons, BorderLayout.NORTH);
-        panel.add(new JScrollPane(new JTable(rosterModel)), BorderLayout.CENTER);
-        return panel;
+        return rosterPanel;
     }
 
     private JPanel buildAnnouncementsTab() {
@@ -171,6 +156,8 @@ public final class OrganizerDashboard extends DashboardPanel {
                         event.status() == null ? "" : event.status().name()
                     );
                 }
+                rosterPanel.setEvents(eventRows);
+                updateFeedbackEvents();
                 status("Events: " + eventRows.size());
             },
             this::error
@@ -201,26 +188,14 @@ public final class OrganizerDashboard extends DashboardPanel {
         );
     }
 
-    private void reloadEventCombos() {
-        ApiTask.run(
-            () -> api.get("/events", EVENT_LIST),
-            rows -> {
-                eventRows = rows == null ? List.of() : rows;
-                rosterEvent.removeAllItems();
-                feedbackEvent.removeAllItems();
-                for (EventDto event : eventRows) {
-                    if (event.status() != EventStatus.REJECTED
-                        && event.status() != EventStatus.CANCELLED) {
-                        rosterEvent.addItem(event);
-                    }
-                    if (event.status() == EventStatus.APPROVED
-                        || event.status() == EventStatus.CANCELLED) {
-                        feedbackEvent.addItem(event);
-                    }
-                }
-            },
-            this::error
-        );
+    private void updateFeedbackEvents() {
+        feedbackEvent.removeAllItems();
+        for (EventDto event : eventRows) {
+            if (event.status() == EventStatus.APPROVED
+                || event.status() == EventStatus.CANCELLED) {
+                feedbackEvent.addItem(event);
+            }
+        }
     }
 
     private void createEvent(JButton trigger) {
@@ -341,39 +316,6 @@ public final class OrganizerDashboard extends DashboardPanel {
             rows.put("Review reason", event.reviewReason());
         }
         UiSupport.details(this, "Event #" + event.id(), rows);
-    }
-
-    private void loadRoster(JButton trigger) {
-        EventDto event = (EventDto) rosterEvent.getSelectedItem();
-        if (event == null) {
-            status("Create or refresh events first.");
-            return;
-        }
-        status("Loading roster…");
-        ApiTask.run(
-            () -> api.get("/events/" + event.id() + "/registrations", RosterDto.class),
-            roster -> {
-                UiSupport.clear(rosterModel);
-                if (roster != null && roster.registrations() != null) {
-                    for (RosterEntry entry : roster.registrations()) {
-                        UiSupport.addRow(
-                            rosterModel,
-                            entry.registrationId(),
-                            entry.studentId(),
-                            entry.fullName(),
-                            entry.rollNumber(),
-                            entry.status() == null ? "" : entry.status().name(),
-                            entry.ticketNo(),
-                            UiSupport.dateTime(entry.registeredAt())
-                        );
-                    }
-                    status("Seats: " + roster.registeredCount() + "/" + roster.capacity()
-                        + " · " + roster.registrations().size() + " registrations");
-                }
-            },
-            this::error,
-            trigger
-        );
     }
 
     private void postAnnouncement(JButton trigger) {
