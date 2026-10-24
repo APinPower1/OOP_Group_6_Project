@@ -11,7 +11,7 @@ COPY gradle ./gradle
 COPY backend/build.gradle.kts ./backend/build.gradle.kts
 COPY client/build.gradle.kts ./client/build.gradle.kts
 # Warm the Gradle dependency cache (main + test classpaths) until build scripts change.
-RUN chmod +x gradlew \
+RUN sed -i 's/\r$//' gradlew && chmod +x gradlew \
     && mkdir -p backend/src/main/java backend/src/test/java client/src/main/java \
     && ./gradlew --no-daemon --quiet :backend:compileTestJava
 
