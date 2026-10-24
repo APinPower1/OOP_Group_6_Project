@@ -2,6 +2,8 @@ package edu.mec.studentportal.client.ui;
 
 import edu.mec.studentportal.client.api.ApiException;
 import java.awt.Component;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -12,8 +14,10 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -33,6 +37,29 @@ public final class UiSupport {
                 return false;
             }
         };
+    }
+
+    public static JTable configureTable(JTable table) {
+        table.setAutoCreateRowSorter(true);
+        table.setFillsViewportHeight(true);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setRowHeight(38);
+        table.setShowHorizontalLines(false);
+        table.setShowVerticalLines(false);
+        table.setIntercellSpacing(new Dimension(0, 1));
+        table.setSelectionBackground(new Color(226, 233, 247));
+        table.setSelectionForeground(SwingTheme.NAVY);
+        table.setGridColor(SwingTheme.PAGE);
+        table.setDefaultRenderer(Object.class, new StripedTableCellRenderer());
+        table.setDefaultRenderer(Number.class, new StripedTableCellRenderer());
+
+        javax.swing.table.JTableHeader header = table.getTableHeader();
+        header.setReorderingAllowed(false);
+        header.setPreferredSize(new Dimension(header.getPreferredSize().width, 40));
+        header.setBorder(javax.swing.BorderFactory.createMatteBorder(
+            0, 0, 1, 0, SwingTheme.BORDER
+        ));
+        return table;
     }
 
     public static void showError(Component parent, ApiException exception) {
@@ -158,5 +185,21 @@ public final class UiSupport {
             return "Request failed (" + exception.getCode() + ").";
         }
         return message;
+    }
+
+    private static final class StripedTableCellRenderer extends DefaultTableCellRenderer {
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+            boolean selected, boolean focused, int row, int column) {
+            Component cell = super.getTableCellRendererComponent(
+                table, value, selected, focused, row, column
+            );
+            if (!selected) {
+                cell.setBackground(row % 2 == 0 ? SwingTheme.SURFACE : SwingTheme.TABLE_STRIPE);
+                cell.setForeground(SwingTheme.TEXT);
+            }
+            setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 10, 0, 10));
+            return cell;
+        }
     }
 }

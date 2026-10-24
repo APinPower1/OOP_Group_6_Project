@@ -20,11 +20,11 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
     private final JLabel statusLabel = new JLabel(" ");
 
     protected DashboardPanel(String title, ApiClient api, SessionContext session) {
-        super(new BorderLayout(0, 18));
+        super(new BorderLayout(0, 20));
         this.api = api;
         this.session = session;
         setBackground(SwingTheme.PAGE);
-        setBorder(BorderFactory.createEmptyBorder(24, 28, 18, 28));
+        setBorder(BorderFactory.createEmptyBorder(24, 30, 20, 30));
 
         JButton refreshButton = new JButton("Refresh all");
         refreshButton.addActionListener(e -> refreshAll());
@@ -69,7 +69,7 @@ abstract class DashboardPanel extends JPanel implements MainFrame.Refreshable {
         tabs.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
         tabs.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(SwingTheme.BORDER),
-            BorderFactory.createEmptyBorder(8, 10, 10, 10)
+            BorderFactory.createEmptyBorder(10, 12, 12, 12)
         ));
 
         statusLabel.setForeground(SwingTheme.MUTED);

@@ -15,12 +15,28 @@ import java.awt.Container;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.JCheckBox;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import org.junit.jupiter.api.Test;
 
 class LoginViewTest {
+    @Test
+    void showPasswordToggleRevealsAndRestoresPasswordEcho() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            LoginView view = new LoginView(null, new SessionContext());
+            JPasswordField password = (JPasswordField) findByName(view, "login.password");
+            JCheckBox toggle = (JCheckBox) findByName(view, "login.showPassword");
+            char masked = password.getEchoChar();
+
+            toggle.doClick();
+            assertEquals((char) 0, password.getEchoChar());
+            toggle.doClick();
+            assertEquals(masked, password.getEchoChar());
+        });
+    }
+
     @Test
     void signInButtonPostsCredentialsAndCreatesSession() throws Exception {
         AtomicReference<String> path = new AtomicReference<>();

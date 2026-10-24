@@ -7,14 +7,15 @@ import javax.swing.plaf.FontUIResource;
 
 /** Shared visual defaults for the desktop client. */
 public final class SwingTheme {
-    public static final Color NAVY = new Color(42, 42, 83);
-    public static final Color ACCENT = new Color(253, 45, 52);
-    public static final Color GOLD = new Color(255, 200, 112);
-    public static final Color PAGE = new Color(248, 249, 250);
+    public static final Color NAVY = new Color(34, 43, 76);
+    public static final Color ACCENT = new Color(190, 54, 62);
+    public static final Color GOLD = new Color(237, 185, 101);
+    public static final Color PAGE = new Color(245, 247, 250);
     public static final Color SURFACE = Color.WHITE;
-    public static final Color TEXT = new Color(51, 51, 51);
-    public static final Color MUTED = new Color(103, 105, 125);
-    public static final Color BORDER = new Color(224, 224, 232);
+    public static final Color TEXT = new Color(40, 47, 61);
+    public static final Color MUTED = new Color(105, 115, 132);
+    public static final Color BORDER = new Color(222, 227, 235);
+    public static final Color TABLE_STRIPE = new Color(248, 250, 252);
 
     private SwingTheme() {}
 
@@ -25,6 +26,10 @@ public final class SwingTheme {
         UIManager.put("Panel.background", PAGE);
         UIManager.put("Label.foreground", TEXT);
         UIManager.put("Label.font", body);
+        UIManager.put("CheckBox.font", body);
+        UIManager.put("CheckBox.foreground", TEXT);
+        UIManager.put("CheckBox.background", SURFACE);
+        UIManager.put("CheckBox.focus", new Color(180, 197, 228));
         UIManager.put("Button.font", strong);
         UIManager.put("Button.background", SURFACE);
         UIManager.put("Button.foreground", NAVY);
@@ -63,15 +68,22 @@ public final class SwingTheme {
         UIManager.put("Table.selectionBackground", new Color(238, 237, 249));
         UIManager.put("Table.selectionForeground", NAVY);
         UIManager.put("Table.gridColor", new Color(237, 237, 243));
-        UIManager.put("Table.rowHeight", 34);
+        UIManager.put("Table.rowHeight", 38);
         UIManager.put("Table.showGrid", false);
         UIManager.put("Table.intercellSpacing", new java.awt.Dimension(0, 1));
         UIManager.put("TableHeader.font", new FontUIResource("SansSerif", Font.BOLD, 12));
-        UIManager.put("TableHeader.background", new Color(239, 243, 247));
+        UIManager.put("TableHeader.background", new Color(240, 243, 248));
         UIManager.put("TableHeader.foreground", NAVY);
         UIManager.put("TableHeader.reorderingAllowed", false);
+        UIManager.put("TableHeader.cellBorder",
+            javax.swing.BorderFactory.createEmptyBorder(0, 10, 0, 10));
         UIManager.put("ScrollPane.background", SURFACE);
         UIManager.put("ScrollPane.border", javax.swing.BorderFactory.createLineBorder(BORDER));
+        UIManager.put("TabbedPane.focus", new Color(180, 197, 228));
+        UIManager.put("TabbedPane.contentAreaColor", SURFACE);
+        UIManager.put("TabbedPane.borderHightlightColor", BORDER);
+        UIManager.put("TabbedPane.darkShadow", BORDER);
+        UIManager.put("TabbedPane.light", SURFACE);
         UIManager.put("OptionPane.messageFont", body);
         UIManager.put("OptionPane.buttonFont", strong);
     }

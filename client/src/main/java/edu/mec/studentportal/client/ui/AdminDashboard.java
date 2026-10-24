@@ -47,7 +47,7 @@ public final class AdminDashboard extends DashboardPanel {
     private final DefaultTableModel usersModel = UiSupport.tableModel(
         "ID", "Name", "Email", "Department", "Role", "Enabled"
     );
-    private final JTable usersTable = new JTable(usersModel);
+    private final JTable usersTable = UiSupport.configureTable(new JTable(usersModel));
     private final JComboBox<String> userRoleFilter = new JComboBox<>(
         new String[] { "ALL", "STUDENT", "ORGANIZER", "FACULTY", "ADMIN" });
     private final JComboBox<String> userEnabledFilter = new JComboBox<>(
@@ -58,19 +58,21 @@ public final class AdminDashboard extends DashboardPanel {
 
     private final DefaultTableModel moderationModel = UiSupport.tableModel(
         "ID", "Title", "Venue", "Starts", "Ends", "Cap", "Status", "Reason");
-    private final JTable moderationTable = new JTable(moderationModel);
+    private final JTable moderationTable = UiSupport.configureTable(new JTable(moderationModel));
     private final JComboBox<String> moderationFilter = new JComboBox<>(
         new String[] { "PENDING_APPROVAL", "ALL", "APPROVED", "REJECTED", "CANCELLED" });
     private List<EventDto> moderationRows = List.of();
 
     private final DefaultTableModel clubsModel = UiSupport.tableModel(
         "ID", "Name", "Category", "Active", "Members");
-    private final JTable clubsTable = new JTable(clubsModel);
+    private final JTable clubsTable = UiSupport.configureTable(new JTable(clubsModel));
     private List<ClubDto> clubRows = List.of();
 
     private final DefaultTableModel announcementsModel = UiSupport.tableModel(
         "ID", "Title", "Audience", "Status", "Created");
-    private final JTable announcementsTable = new JTable(announcementsModel);
+    private final JTable announcementsTable = UiSupport.configureTable(
+        new JTable(announcementsModel)
+    );
     private List<AnnouncementDto> announcementRows = List.of();
 
     private final JLabel reportSummary = new JLabel(" ");
@@ -220,9 +222,9 @@ public final class AdminDashboard extends DashboardPanel {
         top.add(refresh, BorderLayout.NORTH);
         top.add(reportSummary, BorderLayout.CENTER);
 
-        JTable table = new JTable(UiSupport.tableModel(
+        JTable table = UiSupport.configureTable(new JTable(UiSupport.tableModel(
             "Event ID", "Title", "Status", "Capacity", "Confirmed", "Cancelled",
-            "Feedback", "Avg rating"));
+            "Feedback", "Avg rating")));
         table.putClientProperty("terminateEditOnKeyStroke", Boolean.TRUE);
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(top, BorderLayout.NORTH);
@@ -609,7 +611,7 @@ public final class AdminDashboard extends DashboardPanel {
                         );
                     }
                 }
-                JTable table = new JTable(model);
+                JTable table = UiSupport.configureTable(new JTable(model));
                 JOptionPane.showMessageDialog(
                     this, new JScrollPane(table),
                     "Members of " + club.name(), JOptionPane.INFORMATION_MESSAGE);

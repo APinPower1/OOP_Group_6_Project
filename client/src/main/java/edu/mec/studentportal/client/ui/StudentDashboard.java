@@ -22,12 +22,16 @@ import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.RowFilter;
+import javax.swing.table.TableRowSorter;
 
 /**
  * Student role dashboard: browse approved events and register/cancel, manage club
@@ -59,6 +63,11 @@ public final class StudentDashboard extends DashboardPanel {
     private final DefaultTableModelHolder notifications = new DefaultTableModelHolder(
         "ID", "Type", "Title", "Message", "Created", "Read"
     );
+    private final JTextField eventSearch = new JTextField(18);
+    private final JComboBox<String> eventAvailability = new JComboBox<>(
+        new String[] { "All events", "Seats available", "Fully booked" }
+    );
+    private final TableRowSorter<javax.swing.table.DefaultTableModel> eventSorter;
 
     private List<EventDto> eventRows = List.of();
     private List<RegistrationDto> registrationRows = List.of();
@@ -73,6 +82,28 @@ public final class StudentDashboard extends DashboardPanel {
 
     public StudentDashboard(ApiClient api, SessionContext session) {
         super("Student Dashboard", api, session);
+        eventSorter = new TableRowSorter<>(events.model());
+        events.table().setRowSorter(eventSorter);
+        eventSearch.setName("events.search");
+        eventSearch.setToolTipText("Search event titles and venues");
+        eventAvailability.setName("events.availability");
+        eventSearch.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent event) {
+                applyEventFilters();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent event) {
+                applyEventFilters();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent event) {
+                applyEventFilters();
+            }
+        });
+        eventAvailability.addActionListener(event -> applyEventFilters());
         tabs.addTab("Events", buildEventsTab());
         tabs.addTab("My registrations", buildRegistrationsTab());
         tabs.addTab("Clubs", buildClubsTab());
@@ -93,6 +124,7 @@ public final class StudentDashboard extends DashboardPanel {
 
     private JPanel buildEventsTab() {
         JTable table = events.table();
+        table.setName("events.table");
         JButton refresh = new JButton("Refresh");
         refresh.addActionListener(e -> refreshEvents());
         JButton details = new JButton("Details");
@@ -102,16 +134,62 @@ public final class StudentDashboard extends DashboardPanel {
         JButton cancelSeat = new JButton("Cancel my seat");
         cancelSeat.addActionListener(e -> cancelSelectedSeat(table, cancelSeat));
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttons.add(refresh);
-        buttons.add(details);
-        buttons.add(register);
-        buttons.add(cancelSeat);
-
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(buttons, BorderLayout.NORTH);
+        JPanel toolbar = new JPanel(new BorderLayout(0, 2));
+        JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        filters.add(new JLabel("Search"));
+        filters.add(eventSearch);
+        filters.add(new JLabel("Availability"));
+        filters.add(eventAvailability);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        actions.add(refresh);
+        actions.add(details);
+        actions.add(register);
+        actions.add(cancelSeat);
+        toolbar.add(filters, BorderLayout.NORTH);
+        toolbar.add(actions, BorderLayout.SOUTH);
+        toolbar.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        panel.add(toolbar, BorderLayout.NORTH);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         return panel;
+    }
+
+    private void applyEventFilters() {
+        String query = eventSearch.getText().trim();
+        String availability = String.valueOf(eventAvailability.getSelectedItem());
+        java.util.List<RowFilter<javax.swing.table.DefaultTableModel, Integer>> filters =
+            new java.util.ArrayList<>();
+        if (!query.isEmpty()) {
+            filters.add(RowFilter.regexFilter(
+                "(?i)" + java.util.regex.Pattern.quote(query), 1, 2
+            ));
+        }
+        if ("Seats available".equals(availability)) {
+            filters.add(new RowFilter<>() {
+                @Override
+                public boolean include(Entry<? extends javax.swing.table.DefaultTableModel,
+                    ? extends Integer> entry) {
+                    return availableSeats(entry.getStringValue(7)) > 0;
+                }
+            });
+        } else if ("Fully booked".equals(availability)) {
+            filters.add(new RowFilter<>() {
+                @Override
+                public boolean include(Entry<? extends javax.swing.table.DefaultTableModel,
+                    ? extends Integer> entry) {
+                    return availableSeats(entry.getStringValue(7)) == 0;
+                }
+            });
+        }
+        eventSorter.setRowFilter(filters.isEmpty() ? null : RowFilter.andFilter(filters));
+    }
+
+    private static int availableSeats(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException exception) {
+            return -1;
+        }
     }
 
     private JPanel buildRegistrationsTab() {
@@ -608,8 +686,7 @@ public final class StudentDashboard extends DashboardPanel {
 
         private DefaultTableModelHolder(String... columns) {
             this.model = UiSupport.tableModel(columns);
-            this.table = new JTable(model);
-            this.table.setAutoCreateRowSorter(true);
+            this.table = UiSupport.configureTable(new JTable(model));
         }
 
         javax.swing.table.DefaultTableModel model() {

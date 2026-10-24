@@ -39,7 +39,7 @@ public final class OrganizerDashboard extends DashboardPanel {
     private final DefaultTableModel eventsModel = UiSupport.tableModel(
         "ID", "Title", "Venue", "Starts", "Ends", "Cap", "Reg", "Avail", "Status"
     );
-    private final JTable eventsTable = new JTable(eventsModel);
+    private final JTable eventsTable = UiSupport.configureTable(new JTable(eventsModel));
     private List<EventDto> eventRows = List.of();
 
     private final JComboBox<EventDto> rosterEvent = new JComboBox<>();
@@ -50,7 +50,9 @@ public final class OrganizerDashboard extends DashboardPanel {
     private final DefaultTableModel announcementsModel = UiSupport.tableModel(
         "ID", "Title", "Audience", "Status", "Created"
     );
-    private final JTable announcementsTable = new JTable(announcementsModel);
+    private final JTable announcementsTable = UiSupport.configureTable(
+        new JTable(announcementsModel)
+    );
     private List<AnnouncementDto> announcementRows = List.of();
 
     private final JComboBox<EventDto> feedbackEvent = new JComboBox<>();
@@ -61,8 +63,6 @@ public final class OrganizerDashboard extends DashboardPanel {
 
     public OrganizerDashboard(ApiClient api, SessionContext session) {
         super("Organizer Dashboard", api, session);
-        eventsTable.setAutoCreateRowSorter(true);
-        eventsTable.setFillsViewportHeight(true);
         tabs.addTab("My events", buildEventsTab());
         tabs.addTab("Rosters", buildRosterTab());
         tabs.addTab("Announcements", buildAnnouncementsTab());
@@ -111,7 +111,8 @@ public final class OrganizerDashboard extends DashboardPanel {
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(buttons, BorderLayout.NORTH);
-        panel.add(new JScrollPane(new JTable(rosterModel)), BorderLayout.CENTER);
+        panel.add(new JScrollPane(UiSupport.configureTable(new JTable(rosterModel))),
+            BorderLayout.CENTER);
         return panel;
     }
 
@@ -145,7 +146,8 @@ public final class OrganizerDashboard extends DashboardPanel {
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(buttons, BorderLayout.NORTH);
-        panel.add(new JScrollPane(new JTable(feedbackModel)), BorderLayout.CENTER);
+        panel.add(new JScrollPane(UiSupport.configureTable(new JTable(feedbackModel))),
+            BorderLayout.CENTER);
         panel.add(new JScrollPane(feedbackSummaryArea), BorderLayout.SOUTH);
         return panel;
     }

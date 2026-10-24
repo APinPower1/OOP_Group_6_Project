@@ -16,6 +16,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
@@ -29,6 +30,8 @@ public final class LoginView extends JPanel {
 
     private final JTextField emailField = new JTextField(24);
     private final JPasswordField passwordField = new JPasswordField(24);
+    private final char passwordEchoChar = passwordField.getEchoChar();
+    private final JCheckBox showPassword = new JCheckBox("Show password");
     private final JButton loginButton = new JButton("Sign in");
     private final JLabel statusLabel = new JLabel(" ");
 
@@ -152,8 +155,15 @@ public final class LoginView extends JPanel {
         passwordField.setName("login.password");
         passwordField.setPreferredSize(new Dimension(320, 42));
         form.add(passwordField, constraints);
-        constraints.gridx = 0;
         constraints.gridy = 7;
+        constraints.insets = new Insets(0, 0, 14, 0);
+        showPassword.setName("login.showPassword");
+        showPassword.setOpaque(false);
+        showPassword.addActionListener(e -> passwordField.setEchoChar(
+            showPassword.isSelected() ? (char) 0 : passwordEchoChar
+        ));
+        form.add(showPassword, constraints);
+        constraints.gridy = 8;
         constraints.insets = new Insets(0, 0, 10, 0);
         loginButton.setBackground(SwingTheme.ACCENT);
         loginButton.setForeground(Color.WHITE);
@@ -166,7 +176,7 @@ public final class LoginView extends JPanel {
         JLabel secureNote = new JLabel("Secure access  ·  Your session stays private");
         secureNote.setForeground(SwingTheme.MUTED);
         secureNote.setHorizontalAlignment(JLabel.CENTER);
-        constraints.gridy = 8;
+        constraints.gridy = 9;
         constraints.insets = new Insets(10, 0, 0, 0);
         form.add(secureNote, constraints);
 

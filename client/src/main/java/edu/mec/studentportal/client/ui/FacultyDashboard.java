@@ -27,7 +27,7 @@ public final class FacultyDashboard extends DashboardPanel {
     private final DefaultTableModel model = UiSupport.tableModel(
         "ID", "Title", "Organizer ID", "Venue", "Starts", "Ends", "Cap", "Status", "Reason"
     );
-    private final JTable table = new JTable(model);
+    private final JTable table = UiSupport.configureTable(new JTable(model));
     private final JComboBox<String> statusFilter = new JComboBox<>(
         new String[] { "PENDING_APPROVAL", "ALL", "APPROVED", "REJECTED", "CANCELLED" }
     );
@@ -35,7 +35,6 @@ public final class FacultyDashboard extends DashboardPanel {
 
     public FacultyDashboard(ApiClient api, SessionContext session) {
         super("Faculty Dashboard", api, session);
-        table.setAutoCreateRowSorter(true);
         tabs.addTab("Review queue", buildQueueTab());
         tabs.setSelectedIndex(0);
     }
