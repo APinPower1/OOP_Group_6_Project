@@ -2,7 +2,7 @@ package edu.mec.studentportal.client;
 
 import edu.mec.studentportal.client.api.ClientConfig;
 import edu.mec.studentportal.client.ui.MainFrame;
-import edu.mec.studentportal.client.ui.SwingTheme;
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
@@ -32,16 +32,16 @@ public final class ClientApplication {
         }
 
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
         } catch (Exception exception) {
-            System.out.println("System look and feel unavailable; using default.");
+            System.out.println("Cross-platform look and feel unavailable; using default.");
         }
-        SwingTheme.install();
+        UiKit.install();
 
         System.out.println("Student Portal client → API base URL: " + config.baseUrl());
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame(config);
-            frame.setSize(1180, 760);
+            frame.setSize(1280, 820);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });

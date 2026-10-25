@@ -22,13 +22,13 @@ class UserSummaryResponseTest {
     void recordComponentsContainOnlyPublicSummaryFields() {
         assertThat(UserSummaryResponse.class.getRecordComponents())
             .extracting(RecordComponent::getName)
-            .containsExactly("id", "fullName", "email", "role");
+            .containsExactly("id", "fullName", "email", "role", "mustChangePassword");
     }
 
     @Test
     void rejectsNullFullName() {
         assertThatThrownBy(
-            () -> new UserSummaryResponse(41L, null, "student@example.edu", Role.STUDENT)
+            () -> new UserSummaryResponse(41L, null, "student@example.edu", Role.STUDENT, false)
         )
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("fullName must not be null");
@@ -37,7 +37,7 @@ class UserSummaryResponseTest {
     @Test
     void rejectsNullEmail() {
         assertThatThrownBy(
-            () -> new UserSummaryResponse(41L, "Demo Student", null, Role.STUDENT)
+            () -> new UserSummaryResponse(41L, "Demo Student", null, Role.STUDENT, false)
         )
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("email must not be null");
@@ -46,7 +46,7 @@ class UserSummaryResponseTest {
     @Test
     void rejectsNullRole() {
         assertThatThrownBy(
-            () -> new UserSummaryResponse(41L, "Demo Student", "student@example.edu", null)
+            () -> new UserSummaryResponse(41L, "Demo Student", "student@example.edu", null, false)
         )
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("role must not be null");
@@ -58,6 +58,7 @@ class UserSummaryResponseTest {
             "Demo Student",
             "student@example.edu",
             Role.STUDENT
-        );
+        ,
+            false);
     }
 }

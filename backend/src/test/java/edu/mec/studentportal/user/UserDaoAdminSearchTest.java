@@ -101,6 +101,7 @@ class UserDaoAdminSearchTest {
         when(resultSet.getString("department")).thenReturn("Computing");
         when(resultSet.getString("role")).thenReturn(role.name());
         when(resultSet.getBoolean("enabled")).thenReturn(true);
+        when(resultSet.getString("password_hash")).thenReturn("$2a$10$hash");
         when(resultSet.getBoolean("has_student_profile"))
             .thenReturn(role == Role.STUDENT);
         when(resultSet.getBoolean("has_organizer_profile"))

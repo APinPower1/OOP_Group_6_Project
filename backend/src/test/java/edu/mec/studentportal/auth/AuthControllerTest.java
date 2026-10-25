@@ -2,6 +2,7 @@ package edu.mec.studentportal.auth;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -201,7 +202,8 @@ class AuthControllerTest {
                 "Demo Faculty",
                 "faculty@example.edu",
                 Role.FACULTY
-            )
+            ,
+                false)
         );
 
         mockMvc.perform(get("/api/auth/me")
@@ -271,6 +273,46 @@ class AuthControllerTest {
         verifyNoInteractions(authService, userAccountLookup);
     }
 
+    @Test
+    void changePasswordRequiresAuthentication() throws Exception {
+        mockMvc.perform(post("/api/auth/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"currentPassword":"demo-password","newPassword":"brand-new-secret-1"}
+                    """))
+            .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(authService);
+    }
+
+    @Test
+    void changePasswordReturnsUpdatedSummary() throws Exception {
+        when(jwtTokenService.decodeToken("valid-token"))
+            .thenReturn(token(41L, Role.STUDENT));
+        when(userAccountLookup.findSecurityStateById(41L))
+            .thenReturn(Optional.of(
+                new UserSecurityState(41L, Role.STUDENT, true)
+            ));
+        when(authService.changePassword(anyLong(), any(ChangePasswordRequest.class)))
+            .thenReturn(new UserSummaryResponse(
+                41L,
+                "Demo Student",
+                "student@example.edu",
+                Role.STUDENT,
+                false
+            ));
+
+        mockMvc.perform(post("/api/auth/change-password")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"currentPassword":"demo-password","newPassword":"brand-new-secret-1"}
+                    """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(41))
+            .andExpect(jsonPath("$.mustChangePassword").value(false));
+    }
+
     private static LoginResponse successfulResponse() {
         return LoginResponse.bearer(
             "signed-token",
@@ -280,7 +322,8 @@ class AuthControllerTest {
                 "Demo Student",
                 "student@example.edu",
                 Role.STUDENT
-            )
+            ,
+                false)
         );
     }
 

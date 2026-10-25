@@ -1,5 +1,6 @@
 package edu.mec.studentportal.client.ui;
 
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import edu.mec.studentportal.client.api.ApiClient;
 import edu.mec.studentportal.client.api.ApiTask;
@@ -7,6 +8,7 @@ import edu.mec.studentportal.client.api.SessionContext;
 import edu.mec.studentportal.client.dto.AdminUserCreateRequest;
 import edu.mec.studentportal.client.dto.AdminUserDto;
 import edu.mec.studentportal.client.dto.AdminUserPageDto;
+import edu.mec.studentportal.client.dto.AdminResetPasswordRequest;
 import edu.mec.studentportal.client.dto.AdminUserUpdateRequest;
 import edu.mec.studentportal.client.dto.AnnouncementDto;
 import edu.mec.studentportal.client.dto.AnnouncementRequest;
@@ -18,12 +20,17 @@ import edu.mec.studentportal.client.dto.EventRequest;
 import edu.mec.studentportal.client.dto.ParticipationReportDto;
 import edu.mec.studentportal.client.dto.RejectRequest;
 import edu.mec.studentportal.client.dto.Role;
+import edu.mec.studentportal.client.dto.VenueCreateRequest;
+import edu.mec.studentportal.client.dto.VenueResponse;
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -31,6 +38,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.SpinnerNumberModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -43,9 +53,10 @@ public final class AdminDashboard extends DashboardPanel {
     private static final TypeReference<List<AnnouncementDto>> ANNOUNCEMENT_LIST =
         new TypeReference<>() {};
     private static final TypeReference<List<ClubMemberDto>> MEMBER_LIST = new TypeReference<>() {};
+    private static final TypeReference<List<VenueResponse>> VENUE_LIST = new TypeReference<>() {};
 
     private final DefaultTableModel usersModel = UiSupport.tableModel(
-        "ID", "Name", "Email", "Department", "Role", "Enabled"
+        "ID", "Name", "Email", "Department", "Role", "Enabled", "Password hash"
     );
     private final JTable usersTable = new JTable(usersModel);
     private final JComboBox<String> userRoleFilter = new JComboBox<>(
@@ -73,6 +84,11 @@ public final class AdminDashboard extends DashboardPanel {
     private final JTable announcementsTable = new JTable(announcementsModel);
     private List<AnnouncementDto> announcementRows = List.of();
 
+    private final DefaultTableModel venuesModel = UiSupport.tableModel(
+        "ID", "Name");
+    private final JTable venuesTable = new JTable(venuesModel);
+    private final javax.swing.JTextField venueNameField = new javax.swing.JTextField(22);
+
     private final JLabel reportSummary = new JLabel(" ");
 
     public AdminDashboard(ApiClient api, SessionContext session) {
@@ -81,6 +97,7 @@ public final class AdminDashboard extends DashboardPanel {
         tabs.addTab("Event moderation", buildModerationTab());
         tabs.addTab("Clubs", buildClubsTab());
         tabs.addTab("Announcements", buildAnnouncementsTab());
+        tabs.addTab("Venues", buildVenuesTab());
         tabs.addTab("Reports", buildReportsTab());
     }
 
@@ -90,71 +107,83 @@ public final class AdminDashboard extends DashboardPanel {
         refreshModeration();
         refreshClubs();
         refreshAnnouncements();
+        refreshVenues();
         refreshReport();
     }
 
     private JPanel buildUsersTab() {
-        JButton apply = new JButton("Apply filters");
+        JButton apply = UiKit.ghostButton("Apply filters", edu.mec.studentportal.client.ui.theme.Glyph.SEARCH);
         apply.addActionListener(e -> refreshUsers());
         userSearch.field().addActionListener(e -> refreshUsers());
-        JPanel filters = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filters.add(new JLabel("Role:"));
-        filters.add(userRoleFilter);
-        filters.add(new JLabel("Status:"));
-        filters.add(userEnabledFilter);
-        filters.add(new JLabel("Search:"));
-        filters.add(userSearch.field());
-        filters.add(new JLabel("Page:"));
-        filters.add(userPage);
+        styleFilterCombo(userRoleFilter, 132);
+        styleFilterCombo(userEnabledFilter, 132);
+        styleFilterSpinner(userPage);
+        apply.setPreferredSize(new Dimension(128, 42));
+
+        JPanel filters = UiKit.toolbarSurface(new FlowLayout(FlowLayout.LEFT, 12, 0),
+            12, 14, 12, 14);
+        filters.add(filterControl("Role", userRoleFilter, 112));
+        filters.add(filterControl("Status", userEnabledFilter, 118));
+        filters.add(filterControl("Search users", userSearch.field(), 210));
+        filters.add(filterControl("Page", userPage, 78));
         filters.add(apply);
         userRoleFilter.addActionListener(e -> refreshUsers());
         userEnabledFilter.addActionListener(e -> refreshUsers());
 
-        JButton create = new JButton("Create user");
+        JButton create = UiKit.gradientButton("Create user", edu.mec.studentportal.client.ui.theme.Glyph.PLUS);
         create.addActionListener(e -> createUser(create));
-        JButton edit = new JButton("Edit user");
+        JButton edit = UiKit.ghostButton("Edit user");
         edit.addActionListener(e -> editUser(edit));
-        JButton enable = new JButton("Enable");
+        JButton enable = UiKit.ghostButton("Enable");
         enable.addActionListener(e -> setUserEnabled(true, enable));
-        JButton disable = new JButton("Disable");
+        JButton disable = UiKit.ghostButton("Disable");
         disable.addActionListener(e -> setUserEnabled(false, disable));
-        JButton next = new JButton("Next page");
+        JButton reset = UiKit.ghostButton("Reset password…");
+        reset.addActionListener(e -> resetSelectedPassword(reset));
+        JButton next = UiKit.ghostButton("Next page");
         next.addActionListener(e -> {
             if (userPageResult != null && userPageResult.page() + 1 < userPageResult.totalPages()) {
                 userPage.setValue(userPageResult.page() + 1);
             }
             refreshUsers();
         });
-        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        actions.setOpaque(false);
+        actions.setBorder(javax.swing.BorderFactory.createEmptyBorder(10, 4, 2, 4));
         actions.add(create);
         actions.add(edit);
         actions.add(enable);
         actions.add(disable);
+        actions.add(reset);
         actions.add(next);
 
         JPanel panel = new JPanel(new BorderLayout());
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(filters, BorderLayout.NORTH);
-        top.add(actions, BorderLayout.SOUTH);
+        JPanel top = new JPanel();
+        top.setOpaque(false);
+        top.setLayout(new javax.swing.BoxLayout(top, javax.swing.BoxLayout.Y_AXIS));
+        filters.setAlignmentX(LEFT_ALIGNMENT);
+        actions.setAlignmentX(LEFT_ALIGNMENT);
+        top.add(filters);
+        top.add(actions);
         panel.add(top, BorderLayout.NORTH);
         panel.add(new JScrollPane(usersTable), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel buildModerationTab() {
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshModeration());
         moderationFilter.addActionListener(e -> refreshModeration());
-        JButton approve = new JButton("Approve");
+        JButton approve = UiKit.ghostButton("Approve");
         approve.addActionListener(e -> moderate(approve, true));
-        JButton reject = new JButton("Reject…");
+        JButton reject = UiKit.ghostButton("Reject…");
         reject.addActionListener(e -> moderate(reject, false));
-        JButton cancel = new JButton("Cancel event");
+        JButton cancel = UiKit.ghostButton("Cancel event");
         cancel.addActionListener(e -> cancelModerationEvent(cancel));
-        JButton details = new JButton("Details");
+        JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> moderationDetails());
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttons = actionBar();
         buttons.add(new JLabel("Status:"));
         buttons.add(moderationFilter);
         buttons.add(refresh);
@@ -170,18 +199,18 @@ public final class AdminDashboard extends DashboardPanel {
     }
 
     private JPanel buildClubsTab() {
-        JButton create = new JButton("Create club");
+        JButton create = UiKit.ghostButton("Create club");
         create.addActionListener(e -> clubForm(create, null));
-        JButton edit = new JButton("Edit club");
+        JButton edit = UiKit.ghostButton("Edit club");
         edit.addActionListener(e -> clubForm(edit, selectedClub()));
-        JButton deactivate = new JButton("Deactivate");
+        JButton deactivate = UiKit.ghostButton("Deactivate");
         deactivate.addActionListener(e -> deactivateClub(deactivate));
-        JButton members = new JButton("Members");
+        JButton members = UiKit.ghostButton("Members");
         members.addActionListener(e -> showMembers(members));
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshClubs());
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttons = actionBar();
         buttons.add(create);
         buttons.add(edit);
         buttons.add(deactivate);
@@ -195,37 +224,46 @@ public final class AdminDashboard extends DashboardPanel {
     }
 
     private JPanel buildAnnouncementsTab() {
-        JButton post = new JButton("Post announcement");
+        JButton post = UiKit.ghostButton("Post announcement");
         post.addActionListener(e -> postAnnouncement(post));
-        JButton archive = new JButton("Archive");
+        JButton archive = UiKit.ghostButton("Archive");
         archive.addActionListener(e -> archiveAnnouncement(archive));
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshAnnouncements());
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel buttons = actionBar();
         buttons.add(post);
         buttons.add(archive);
         buttons.add(refresh);
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(buttons, BorderLayout.NORTH);
-        panel.add(new JScrollPane(announcementsTable), BorderLayout.CENTER);
+        JScrollPane annScroll = new JScrollPane(announcementsTable);
+        panel.add(annScroll, BorderLayout.CENTER);
+        announcementsTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    showAnnouncementDetails();
+                }
+            }
+        });
         return panel;
     }
 
     private JPanel buildReportsTab() {
-        JButton refresh = new JButton("Refresh report");
+        JButton refresh = UiKit.ghostButton("Refresh report");
         refresh.addActionListener(e -> refreshReport());
-        JPanel top = new JPanel(new BorderLayout());
-        top.add(refresh, BorderLayout.NORTH);
-        top.add(reportSummary, BorderLayout.CENTER);
 
         JTable table = new JTable(UiSupport.tableModel(
             "Event ID", "Title", "Status", "Capacity", "Confirmed", "Cancelled",
             "Feedback", "Avg rating"));
         table.putClientProperty("terminateEditOnKeyStroke", Boolean.TRUE);
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(top, BorderLayout.NORTH);
+        JPanel reportToolbar = UiKit.toolbarSurface(new BorderLayout(0, 8), 12, 14, 12, 14);
+        reportToolbar.add(refresh, BorderLayout.NORTH);
+        reportToolbar.add(reportSummary, BorderLayout.CENTER);
+        panel.add(reportToolbar, BorderLayout.NORTH);
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         reportTable = table;
         return panel;
@@ -277,6 +315,207 @@ public final class AdminDashboard extends DashboardPanel {
         );
     }
 
+    private JPanel buildVenuesTab() {
+        edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(venueNameField);
+        JButton add = UiKit.ghostButton("Add venue");
+        add.addActionListener(e -> addVenue(add));
+        JButton remove = UiKit.ghostButton("Remove selected");
+        remove.addActionListener(e -> removeVenue(remove));
+        JButton refresh = UiKit.ghostButton("Refresh");
+        refresh.addActionListener(e -> refreshVenues());
+
+        JLabel help = new JLabel("<html>Venues feed the event form's venue dropdown. "
+            + "Removing a venue never rewrites historical events \u2014 they keep their "
+            + "venue text.</html>");
+        help.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.XS);
+        help.setForeground(edu.mec.studentportal.client.ui.theme.PortalTheme.MUTED);
+
+        JPanel inputRow = actionBar();
+        inputRow.add(new JLabel("New venue:"));
+        inputRow.add(venueNameField);
+        inputRow.add(add);
+        inputRow.add(remove);
+        inputRow.add(refresh);
+
+        JPanel top = new JPanel();
+        top.setLayout(new javax.swing.BoxLayout(top, javax.swing.BoxLayout.Y_AXIS));
+        top.setOpaque(false);
+        help.setAlignmentX(LEFT_ALIGNMENT);
+        inputRow.setAlignmentX(LEFT_ALIGNMENT);
+        top.add(help);
+        top.add(inputRow);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(new JScrollPane(venuesTable), BorderLayout.CENTER);
+        return panel;
+    }
+
+    private static JPanel actionBar() {
+        return UiKit.toolbarSurface(new FlowLayout(FlowLayout.LEFT, 8, 0), 10, 12, 10, 12);
+    }
+
+    private static JPanel filterControl(String caption, JComponent control, int width) {
+        JPanel group = new JPanel();
+        group.setOpaque(false);
+        group.setLayout(new javax.swing.BoxLayout(group, javax.swing.BoxLayout.Y_AXIS));
+        JLabel label = new JLabel(caption.toUpperCase());
+        label.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.EYEBROW);
+        label.setForeground(edu.mec.studentportal.client.ui.theme.PortalTheme.MUTED);
+        label.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 2, 5, 0));
+        Dimension size = new Dimension(width, 42);
+        control.setPreferredSize(size);
+        control.setMinimumSize(new Dimension(Math.min(width, 76), 42));
+        control.setMaximumSize(new Dimension(width, 42));
+        group.add(label);
+        group.add(control);
+        return group;
+    }
+
+    private static void styleFilterCombo(JComboBox<String> combo, int width) {
+        combo.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.BODY);
+        combo.setForeground(edu.mec.studentportal.client.ui.theme.PortalTheme.INK);
+        combo.setBackground(Color.WHITE);
+        combo.setOpaque(true);
+        combo.setBorder(javax.swing.BorderFactory.createCompoundBorder(
+            javax.swing.BorderFactory.createLineBorder(
+                edu.mec.studentportal.client.ui.theme.PortalTheme.BORDER, 1, true),
+            javax.swing.BorderFactory.createEmptyBorder(0, 8, 0, 6)));
+        combo.setPreferredSize(new Dimension(width, 42));
+    }
+
+    private static void styleFilterSpinner(JSpinner spinner) {
+        spinner.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.BODY);
+        spinner.setBorder(javax.swing.BorderFactory.createLineBorder(
+            edu.mec.studentportal.client.ui.theme.PortalTheme.BORDER, 1, true));
+        spinner.setPreferredSize(new Dimension(92, 42));
+        JComponent editor = spinner.getEditor();
+        if (editor instanceof JSpinner.DefaultEditor defaultEditor) {
+            defaultEditor.getTextField().setFont(
+                edu.mec.studentportal.client.ui.theme.PortalTheme.BODY);
+            defaultEditor.getTextField().setHorizontalAlignment(javax.swing.JTextField.LEFT);
+            defaultEditor.getTextField().setBorder(
+                javax.swing.BorderFactory.createEmptyBorder(0, 8, 0, 2));
+        }
+    }
+
+    private void refreshVenues() {
+        status("Loading venues…");
+        ApiTask.run(
+            () -> api.get("/venues", VENUE_LIST),
+            venues -> {
+                UiSupport.clear(venuesModel);
+                int count = 0;
+                if (venues != null) {
+                    for (VenueResponse venue : venues) {
+                        UiSupport.addRow(venuesModel, venue.id(), venue.name());
+                        count++;
+                    }
+                }
+                status("Venues: " + count);
+            },
+            this::error
+        );
+    }
+
+    private void addVenue(JButton trigger) {
+        String name = venueNameField.getText().trim();
+        if (name.isEmpty()) {
+            status("Enter a venue name first.");
+            return;
+        }
+        status("Adding venue…");
+        ApiTask.run(
+            () -> api.post("/admin/venues", new VenueCreateRequest(name),
+                VenueResponse.class),
+            created -> {
+                venueNameField.setText("");
+                status("Venue added.");
+                refreshVenues();
+            },
+            this::error,
+            trigger
+        );
+    }
+
+    private void removeVenue(JButton trigger) {
+        Long id = UiSupport.selectedId(venuesTable, 0);
+        if (id == null) {
+            status("Select a venue first.");
+            return;
+        }
+        int row = venuesTable.getSelectedRow();
+        String name = String.valueOf(
+            venuesModel.getValueAt(venuesTable.convertRowIndexToModel(row), 1));
+        if (!UiSupport.confirm(this,
+            "Remove venue \"" + name + "\"? Existing events keep their venue text.")) {
+            return;
+        }
+        status("Removing venue…");
+        ApiTask.run(
+            () -> api.delete("/admin/venues/" + id, VenueResponse.class),
+            removed -> {
+                status("Venue removed.");
+                refreshVenues();
+            },
+            this::error,
+            trigger
+        );
+    }
+
+    private void resetSelectedPassword(JButton trigger) {
+        AdminUserDto user = selectedUser();
+        if (user == null) {
+            status("Select a user first.");
+            return;
+        }
+        javax.swing.JPasswordField field = new javax.swing.JPasswordField(24);
+        edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(field);
+        JPanel prompt = new JPanel(new BorderLayout(0, 8));
+        JLabel caption = new JLabel("New temporary password for " + user.email()
+            + " (8\u201372 characters):");
+        caption.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.SM);
+        prompt.add(caption, BorderLayout.NORTH);
+        prompt.add(field, BorderLayout.CENTER);
+        int result = JOptionPane.showConfirmDialog(this, prompt,
+            "Reset password #" + user.id(), JOptionPane.OK_CANCEL_OPTION,
+            JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) {
+            status("Password reset cancelled.");
+            return;
+        }
+        String password = new String(field.getPassword());
+        int bytes = password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        if (bytes < 8 || bytes > 72) {
+            UiSupport.info(this, "Password must be between 8 and 72 UTF-8 bytes.");
+            return;
+        }
+        status("Resetting password…");
+        ApiTask.run(
+            () -> api.post("/admin/users/" + user.id() + "/reset-password",
+                new AdminResetPasswordRequest(password), AdminUserDto.class),
+            updated -> {
+                status("Password reset — must be changed at next login.");
+                JPanel details = new JPanel(new BorderLayout(0, 8));
+                JLabel summary = new JLabel("<html>Temporary password stored for <b>"
+                    + user.email() + "</b>. The user must change it at next login.<br>"
+                    + "Stored BCrypt hash (verification only \u2014 the plaintext is "
+                    + "never returned):<br>"
+                    + "<span style='font-family:monospace'>"
+                    + (updated.passwordHash() == null ? "(none)"
+                        : updated.passwordHash())
+                    + "</span></html>");
+                summary.setFont(edu.mec.studentportal.client.ui.theme.PortalTheme.SM);
+                details.add(summary, BorderLayout.CENTER);
+                JOptionPane.showMessageDialog(this, details, "Password reset",
+                    JOptionPane.INFORMATION_MESSAGE);
+                refreshUsers();
+            },
+            this::error,
+            trigger
+        );
+    }
+
     private void refreshUsers() {
         StringBuilder path = new StringBuilder("/admin/users?page=")
             .append(userPage.getValue())
@@ -312,7 +551,8 @@ public final class AdminDashboard extends DashboardPanel {
                             user.email(),
                             user.department(),
                             user.role() == null ? "" : user.role().name(),
-                            user.enabled() ? "Yes" : "No"
+                            user.enabled() ? "Yes" : "No",
+                            user.passwordHash() == null ? "" : user.passwordHash()
                         );
                     }
                     status("Users: " + page.totalItems() + " total · page "
@@ -644,21 +884,52 @@ public final class AdminDashboard extends DashboardPanel {
     }
 
     private void postAnnouncement(JButton trigger) {
-        String[] values = UiSupport.form(this, "Post announcement",
-            new String[] { "Title", "Content", "Audience (blank=Everyone)" },
-            new String[] { "", "", "" });
-        if (values == null) {
+        JPanel main = new JPanel(new java.awt.BorderLayout(8, 8));
+        JPanel form = new JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.insets = new java.awt.Insets(4, 4, 4, 4);
+        gbc.anchor = java.awt.GridBagConstraints.WEST;
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0; gbc.gridy = 0;
+        form.add(new JLabel("Title"), gbc);
+        gbc.gridx = 1;
+        javax.swing.JTextField titleField = new javax.swing.JTextField(28);
+        edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(titleField);
+        form.add(titleField, gbc);
+        gbc.gridx = 0; gbc.gridy = 1;
+        form.add(new JLabel("Audience"), gbc);
+        gbc.gridx = 1;
+        JComboBox<String> audienceBox = new JComboBox<>(new String[] {"ALL", "STUDENT", "FACULTY", "ORGANIZER", "ADMIN"});
+        form.add(audienceBox, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        form.add(new JLabel("Content"), gbc);
+        gbc.gridx = 1; gbc.fill = java.awt.GridBagConstraints.BOTH;
+        javax.swing.JTextArea contentArea = new javax.swing.JTextArea(8, 28);
+        contentArea.setLineWrap(true);
+        contentArea.setWrapStyleWord(true);
+        contentArea.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0xCCCCCC)));
+        edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(contentArea);
+        javax.swing.JScrollPane contentScroll = new javax.swing.JScrollPane(contentArea);
+        contentScroll.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0xCCCCCC)));
+        contentScroll.setPreferredSize(new java.awt.Dimension(340, 160));
+        form.add(contentScroll, gbc);
+        main.add(form, java.awt.BorderLayout.CENTER);
+        int result = JOptionPane.showConfirmDialog(this, main, "Post announcement", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) {
             return;
         }
-        if (values[0].isEmpty() || values[1].isEmpty()) {
+        String title = titleField.getText().trim();
+        String content = contentArea.getText().trim();
+        if (title.isEmpty() || content.isEmpty()) {
             UiSupport.info(this, "Title and content are required.");
             return;
         }
+        Object sel = audienceBox.getSelectedItem();
+        String audience = sel == null || "ALL".equals(sel) ? null : sel.toString();
         status("Publishing announcement…");
         ApiTask.run(
             () -> api.post("/announcements",
-                new AnnouncementRequest(values[0], values[1],
-                    values[2].isEmpty() ? null : values[2]),
+                new AnnouncementRequest(title, content, audience),
                 AnnouncementDto.class),
             created -> {
                 status("Announcement published.");
@@ -667,6 +938,32 @@ public final class AdminDashboard extends DashboardPanel {
             this::error,
             trigger
         );
+    }
+
+
+    private void showAnnouncementDetails() {
+        int row = announcementsTable.getSelectedRow();
+        if (row < 0 || announcementRows == null) {
+            return;
+        }
+        int modelRow = announcementsTable.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= announcementRows.size()) {
+            return;
+        }
+        AnnouncementDto ann = announcementRows.get(modelRow);
+        JPanel panel = new JPanel(new java.awt.BorderLayout(6, 6));
+        JLabel title = new JLabel(ann.title() == null ? "" : ann.title());
+        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 14f));
+        panel.add(title, java.awt.BorderLayout.NORTH);
+        JTextArea content = new JTextArea(ann.content() == null ? "" : ann.content());
+        content.setEditable(false);
+        content.setLineWrap(true);
+        content.setWrapStyleWord(true);
+        content.setBackground(panel.getBackground());
+        JScrollPane sp = new JScrollPane(content);
+        sp.setPreferredSize(new java.awt.Dimension(400, 200));
+        panel.add(sp, java.awt.BorderLayout.CENTER);
+        JOptionPane.showMessageDialog(this, panel, "Announcement", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void archiveAnnouncement(JButton trigger) {
@@ -739,7 +1036,12 @@ public final class AdminDashboard extends DashboardPanel {
 
     /** Small text field bundled with its action component access for filters. */
     private static final class JTextFieldWithAction {
-        private final javax.swing.JTextField field = new javax.swing.JTextField(14);
+        private final UiKit.HintTextField field = UiKit.hintField("Name or email");
+
+        private JTextFieldWithAction() {
+            field.setPreferredSize(new Dimension(210, 42));
+            field.setMinimumSize(new Dimension(180, 42));
+        }
 
         javax.swing.JTextField field() {
             return field;

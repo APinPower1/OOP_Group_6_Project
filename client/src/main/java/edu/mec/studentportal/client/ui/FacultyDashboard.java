@@ -1,5 +1,6 @@
 package edu.mec.studentportal.client.ui;
 
+import edu.mec.studentportal.client.ui.theme.UiKit;
 import com.fasterxml.jackson.core.type.TypeReference;
 import edu.mec.studentportal.client.api.ApiClient;
 import edu.mec.studentportal.client.api.ApiTask;
@@ -46,13 +47,13 @@ public final class FacultyDashboard extends DashboardPanel {
     }
 
     private JPanel buildQueueTab() {
-        JButton refresh = new JButton("Refresh");
+        JButton refresh = UiKit.ghostButton("Refresh");
         refresh.addActionListener(e -> refreshQueue());
-        JButton details = new JButton("Details");
+        JButton details = UiKit.ghostButton("Details");
         details.addActionListener(e -> showDetails());
-        JButton approve = new JButton("Approve");
+        JButton approve = UiKit.ghostButton("Approve");
         approve.addActionListener(e -> approveSelected(approve));
-        JButton reject = new JButton("Reject…");
+        JButton reject = UiKit.ghostButton("Reject…");
         reject.addActionListener(e -> rejectSelected(reject));
 
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.LEFT));

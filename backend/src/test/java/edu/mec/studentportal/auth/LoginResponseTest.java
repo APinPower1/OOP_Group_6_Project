@@ -14,7 +14,8 @@ class LoginResponseTest {
         "Demo Student",
         "student@example.edu",
         Role.STUDENT
-    );
+    ,
+        false);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Test
@@ -89,11 +90,12 @@ class LoginResponseTest {
         assertThat(body.get("expiresInSeconds").asLong()).isEqualTo(1800L);
 
         JsonNode user = body.get("user");
-        assertThat(user.size()).isEqualTo(4);
+        assertThat(user.size()).isEqualTo(5);
         assertThat(user.get("id").asLong()).isEqualTo(41L);
         assertThat(user.get("fullName").asText()).isEqualTo("Demo Student");
         assertThat(user.get("email").asText()).isEqualTo("student@example.edu");
         assertThat(user.get("role").asText()).isEqualTo("STUDENT");
+        assertThat(user.get("mustChangePassword").asBoolean()).isFalse();
         assertThat(json).doesNotContain("passwordHash", "password");
     }
 }

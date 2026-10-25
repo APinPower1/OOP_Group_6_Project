@@ -10,6 +10,7 @@ public record AdminUserDto(
     String department,
     Role role,
     boolean enabled,
+    String passwordHash,
     Map<String, Object> profile
 ) {
     public AdminUserDto {

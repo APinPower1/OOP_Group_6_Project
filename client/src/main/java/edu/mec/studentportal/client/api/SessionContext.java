@@ -40,6 +40,20 @@ public final class SessionContext {
         notifyListeners();
     }
 
+    /**
+     * Replaces the stored user without firing {@code sessionChanged} — used after a
+     * password change so the open dashboard stays put instead of being rebuilt.
+     */
+    public synchronized void refreshUser(UserSummary updated) {
+        if (updated == null) {
+            throw new IllegalArgumentException("user must not be null");
+        }
+        if (this.token == null) {
+            throw new IllegalStateException("no active session to refresh");
+        }
+        this.user = updated;
+    }
+
     public synchronized String getToken() {
         return token;
     }
