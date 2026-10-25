@@ -24,9 +24,13 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.AbstractAction;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
@@ -275,6 +279,16 @@ public final class LoginView extends JPanel {
             setBorder(new EmptyBorder(12, 15, 12, 15));
             setPreferredSize(new Dimension(250, 48));
             UiKit.enableTextEditing(this);
+            // Ensure Ctrl+A / Cmd+A select all works
+            getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAll");
+            getActionMap().put("selectAll", new javax.swing.AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    selectAll();
+                }
+            });
+            getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.META_DOWN_MASK), "selectAll");
+
             getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
                 @Override
                 public void insertUpdate(javax.swing.event.DocumentEvent event) {
@@ -622,6 +636,14 @@ public final class LoginView extends JPanel {
             setBorder(new EmptyBorder(11, 15, 11, 15));
             setPreferredSize(new Dimension(getPreferredSize().width, 46));
             UiKit.enableTextEditing(this);
+            getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_DOWN_MASK), "selectAllPw");
+            getActionMap().put("selectAllPw", new javax.swing.AbstractAction() {
+                @Override
+                public void actionPerformed(java.awt.event.ActionEvent e) {
+                    selectAll();
+                }
+            });
+            getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.META_DOWN_MASK), "selectAllPw");
             getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
                 @Override
                 public void insertUpdate(javax.swing.event.DocumentEvent event) {
