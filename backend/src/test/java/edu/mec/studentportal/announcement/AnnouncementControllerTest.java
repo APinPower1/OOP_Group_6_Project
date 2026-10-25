@@ -60,6 +60,19 @@ class AnnouncementControllerTest extends DatabaseIntegrationTestSupport {
     }
 
     @Test
+    void facultyCanPublish() throws Exception {
+        long faculty = createFaculty();
+
+        mockMvc.perform(post("/api/announcements")
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, faculty)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"Lab update\",\"content\":\"Room change\",\"audienceRole\":\"STUDENT\"}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.title").value("Lab update"))
+            .andExpect(jsonPath("$.status").value("PUBLISHED"));
+    }
+
+    @Test
     void archiveReturnsArchivedStatus() throws Exception {
         long organizer = createOrganizer();
         long announcementId = createAnnouncementViaHttp(organizer);

@@ -42,7 +42,7 @@ public class AnnouncementService {
         this.clock = clock;
     }
 
-    /** Organizer/Admin publishes an announcement and notifies the audience in one transaction. */
+    /** Organizer/Faculty/Admin publishes an announcement and notifies the audience in one transaction. */
     @Transactional
     public PublishResult publish(AnnouncementRequest request, long actingUserId) {
         requirePublisher(actingUserId);
@@ -79,7 +79,7 @@ public class AnnouncementService {
         return announcements.stream().map(AnnouncementResponse::from).toList();
     }
 
-    /** Creator Organizer or Admin archives an announcement; history and notifications remain. */
+    /** Creator staff (Organizer/Faculty) or Admin archives an announcement; history stays. */
     @Transactional
     public AnnouncementResponse archive(long announcementId, long actingUserId) {
         AnnouncementDAO.Actor actor = requireActor(actingUserId);
@@ -91,7 +91,8 @@ public class AnnouncementService {
             )
         );
         boolean permitted = ROLE_ADMIN.equals(actor.role())
-            || (ROLE_ORGANIZER.equals(actor.role()) && announcement.createdBy() == actingUserId);
+            || ((ROLE_ORGANIZER.equals(actor.role()) || ROLE_FACULTY.equals(actor.role()))
+                && announcement.createdBy() == actingUserId);
         if (!permitted) {
             throw new ApiException(
                 HttpStatus.FORBIDDEN,
@@ -107,11 +108,13 @@ public class AnnouncementService {
 
     private void requirePublisher(long userId) {
         AnnouncementDAO.Actor actor = requireActor(userId);
-        if (!ROLE_ORGANIZER.equals(actor.role()) && !ROLE_ADMIN.equals(actor.role())) {
+        if (!ROLE_ORGANIZER.equals(actor.role())
+            && !ROLE_FACULTY.equals(actor.role())
+            && !ROLE_ADMIN.equals(actor.role())) {
             throw new ApiException(
                 HttpStatus.FORBIDDEN,
                 ApiErrorCodes.FORBIDDEN,
-                "Only organizers and admins may publish announcements."
+                "Only organizers, faculty and admins may publish announcements."
             );
         }
     }

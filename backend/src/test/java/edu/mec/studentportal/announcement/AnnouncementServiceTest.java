@@ -61,19 +61,42 @@ class AnnouncementServiceTest extends DatabaseIntegrationTestSupport {
     }
 
     @Test
-    void onlyOrganizerAndAdminMayPublish() {
+    void studentsMayNotPublish() {
         long student = createStudent();
-        long faculty = createFaculty();
 
-        for (long actor : new long[] { student, faculty }) {
-            ApiException exception = assertThrows(
-                ApiException.class,
-                () -> announcementService.publish(new AnnouncementRequest("X", "Y", null), actor)
-            );
-            assertThat(exception.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
-            assertThat(exception.getCode()).isEqualTo(ApiErrorCodes.FORBIDDEN);
-        }
+        ApiException exception = assertThrows(
+            ApiException.class,
+            () -> announcementService.publish(new AnnouncementRequest("X", "Y", null), student)
+        );
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(exception.getCode()).isEqualTo(ApiErrorCodes.FORBIDDEN);
         assertThat(countRows("announcements", "1 = 1")).isZero();
+    }
+
+    @Test
+    void facultyMayPublishAndArchiveOwnAnnouncement() {
+        long faculty = createFaculty();
+        long organizer = createOrganizer();
+
+        AnnouncementService.PublishResult published = announcementService.publish(
+            new AnnouncementRequest("Faculty Notice", "Lab sessions rescheduled.", null),
+            faculty
+        );
+        assertThat(published.announcement().status()).isEqualTo(AnnouncementStatus.PUBLISHED);
+        assertThat(published.announcement().createdBy()).isEqualTo(faculty);
+
+        assertThat(announcementService.archive(published.announcement().id(), faculty).status())
+            .isEqualTo(AnnouncementStatus.ARCHIVED);
+
+        AnnouncementService.PublishResult other = announcementService.publish(
+            new AnnouncementRequest("Organizer Notice", "Body", null),
+            organizer
+        );
+        ApiException denied = assertThrows(
+            ApiException.class,
+            () -> announcementService.archive(other.announcement().id(), faculty)
+        );
+        assertThat(denied.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
