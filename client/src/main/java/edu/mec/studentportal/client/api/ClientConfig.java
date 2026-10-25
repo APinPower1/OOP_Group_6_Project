@@ -48,10 +48,14 @@ public record ClientConfig(String baseUrl, int connectTimeoutMillis, int request
         String explicit = System.getProperty("client.config");
         if (explicit != null && !explicit.isBlank()) {
             Path path = Path.of(explicit.trim());
-            if (Files.isRegularFile(path)) {
-                readInto(properties, path);
+            if (!Files.isRegularFile(path)) {
+                // an explicit path that does not exist is treated as "no override":
+                // fall back to the built-in defaults instead of silently picking up
+                // a client-config.properties from the working directory
                 return from(properties);
             }
+            readInto(properties, path);
+            return from(properties);
         }
         for (String candidate : new String[] {
             "client-config.properties",
