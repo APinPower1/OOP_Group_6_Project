@@ -27,6 +27,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.SpinnerNumberModel;
 
@@ -165,7 +169,16 @@ public final class StudentDashboard extends DashboardPanel {
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(buttons, BorderLayout.NORTH);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(table);
+        panel.add(scroll, BorderLayout.CENTER);
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    showAnnouncementDetails(table);
+                }
+            }
+        });
         return panel;
     }
 
@@ -463,14 +476,24 @@ public final class StudentDashboard extends DashboardPanel {
             status("Select an announcement first.");
             return;
         }
-        Map<String, String> rows = UiSupport.rows();
-        rows.put("Title", announcement.title());
-        rows.put("Content", announcement.content());
-        rows.put("Audience",
-            announcement.audienceRole() == null ? "Everyone" : announcement.audienceRole());
-        rows.put("Status", UiSupport.text(announcement.status()));
-        rows.put("Created", UiSupport.dateTime(announcement.createdAt()));
-        UiSupport.details(this, "Announcement", rows);
+        JPanel panel = new JPanel(new java.awt.BorderLayout(6, 6));
+        JLabel title = new JLabel(announcement.title() == null ? "" : announcement.title());
+        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 14f));
+        panel.add(title, java.awt.BorderLayout.NORTH);
+        JTextArea content = new JTextArea(announcement.content() == null ? "" : announcement.content());
+        content.setEditable(false);
+        content.setLineWrap(true);
+        content.setWrapStyleWord(true);
+        content.setBackground(panel.getBackground());
+        JScrollPane sp = new JScrollPane(content);
+        sp.setPreferredSize(new java.awt.Dimension(420, 220));
+        panel.add(sp, java.awt.BorderLayout.CENTER);
+        JPanel meta = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT));
+        meta.add(new JLabel("Audience: " + (announcement.audienceRole() == null ? "Everyone" : announcement.audienceRole())));
+        meta.add(new JLabel(" | Status: " + UiSupport.text(announcement.status())));
+        meta.add(new JLabel(" | Created: " + UiSupport.dateTime(announcement.createdAt())));
+        panel.add(meta, java.awt.BorderLayout.SOUTH);
+        JOptionPane.showMessageDialog(this, panel, "Announcement", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void markNotificationRead(JTable table) {

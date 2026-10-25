@@ -11,15 +11,17 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -30,9 +32,9 @@ import javax.swing.border.EmptyBorder;
 /**
  * Left-rail navigation hosting one content card per tab (built by the dashboards with the
  * same {@code addTab}/{@code setSelectedIndex} surface they had on {@code JTabbedPane}).
- * Ink-green gradient rail, icon nav items with an accent indicator, user identity at the
+ * Bright navigation rail, icon nav items with a clear active state, user identity at the
  * bottom. Every non-calendar tab is wrapped in a white page card so all pages share the
- * calendar's card language.
+ * same quiet visual language.
  */
 public final class SidebarTabs extends JPanel {
     private static final Map<String, Glyph> ICONS = new HashMap<>();
@@ -56,7 +58,7 @@ public final class SidebarTabs extends JPanel {
 
     private final CardLayout cards = new CardLayout();
     private final JPanel content = new JPanel(cards);
-    private final JPanel rail = new NavyRail();
+    private final JPanel rail = new WorkspaceRail();
     private final JPanel navStack = new JPanel();
     private final List<NavItem> items = new ArrayList<>();
     private int selectedIndex = -1;
@@ -66,12 +68,12 @@ public final class SidebarTabs extends JPanel {
         setBackground(PortalTheme.CANVAS);
 
         rail.setPreferredSize(new Dimension(PortalTheme.SIDEBAR_WIDTH, 0));
-        rail.setBorder(new EmptyBorder(22, 14, 18, 14));
+        rail.setBorder(new EmptyBorder(24, 16, 18, 16));
         rail.add(createBrand(session), BorderLayout.NORTH);
 
         navStack.setOpaque(false);
         navStack.setLayout(new javax.swing.BoxLayout(navStack, javax.swing.BoxLayout.Y_AXIS));
-        navStack.setBorder(new EmptyBorder(18, 0, 0, 0));
+        navStack.setBorder(new EmptyBorder(28, 0, 0, 0));
         rail.add(navStack, BorderLayout.CENTER);
 
         rail.add(createIdentity(session), BorderLayout.SOUTH);
@@ -132,8 +134,8 @@ public final class SidebarTabs extends JPanel {
         JPanel mark = new JPanel(new BorderLayout(10, 0));
         mark.setOpaque(false);
         mark.add(new LogoTile(), BorderLayout.WEST);
-        JLabel name = new JLabel("MEC PORTAL");
-        name.setForeground(Color.WHITE);
+        JLabel name = new JLabel("MEC Portal");
+        name.setForeground(PortalTheme.INK);
         name.setFont(PortalTheme.LG_BOLD);
         mark.add(name, BorderLayout.CENTER);
         brand.add(mark, BorderLayout.NORTH);
@@ -160,8 +162,8 @@ public final class SidebarTabs extends JPanel {
                 }
             };
             chip.setOpaque(false);
-            chip.setForeground(PortalTheme.CYAN);
-            chip.setBackground(new Color(0x4F, 0xEA, 0xC0, 44));
+            chip.setForeground(PortalTheme.ACCENT);
+            chip.setBackground(PortalTheme.ACCENT_SOFT);
             chip.setFont(PortalTheme.EYEBROW);
             chip.setHorizontalAlignment(SwingConstants.CENTER);
             chip.setBorder(new EmptyBorder(5, 10, 5, 10));
@@ -193,7 +195,7 @@ public final class SidebarTabs extends JPanel {
         JPanel texts = new JPanel(new BorderLayout(0, 2));
         texts.setOpaque(false);
         JLabel name = new JLabel(fullName);
-        name.setForeground(Color.WHITE);
+        name.setForeground(PortalTheme.INK);
         name.setFont(PortalTheme.SM_BOLD);
         JLabel mail = new JLabel(email);
         mail.setForeground(PortalTheme.SIDEBAR_TEXT_DIM);
@@ -216,10 +218,12 @@ public final class SidebarTabs extends JPanel {
         return wrap;
     }
 
-    /** Sidebar rail: ink-green vertical gradient behind brand, nav and identity. */
-    private static final class NavyRail extends JPanel {
-        private NavyRail() {
+    /** Sidebar rail: quiet white canvas with a single right-hand divider. */
+    private static final class WorkspaceRail extends JPanel {
+        private WorkspaceRail() {
             super(new BorderLayout());
+            setOpaque(true);
+            setBackground(Color.WHITE);
         }
 
         @Override
@@ -227,16 +231,15 @@ public final class SidebarTabs extends JPanel {
             super.paintComponent(graphics);
             Graphics2D g2 = (Graphics2D) graphics.create();
             try {
-                g2.setPaint(new GradientPaint(0, 0, PortalTheme.SIDEBAR_TOP,
-                    0, getHeight(), PortalTheme.SIDEBAR_BOTTOM));
-                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(PortalTheme.BORDER);
+                g2.fillRect(getWidth() - 1, 0, 1, getHeight());
             } finally {
                 g2.dispose();
             }
         }
     }
 
-    private final class NavItem extends JButton {
+    private final class NavItem extends UiKit.AnimatedButton {
         private final String title;
         private final Glyph icon;
         private boolean active;
@@ -251,20 +254,7 @@ public final class SidebarTabs extends JPanel {
             setHorizontalAlignment(SwingConstants.LEFT);
             setForeground(PortalTheme.SIDEBAR_TEXT);
             setFont(PortalTheme.MD);
-            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(10, 14, 10, 14));
-            setRolloverEnabled(true);
-            addMouseListener(new java.awt.event.MouseAdapter() {
-                @Override
-                public void mouseEntered(java.awt.event.MouseEvent event) {
-                    repaint();
-                }
-
-                @Override
-                public void mouseExited(java.awt.event.MouseEvent event) {
-                    repaint();
-                }
-            });
         }
 
         private void setActive(boolean active) {
@@ -280,33 +270,32 @@ public final class SidebarTabs extends JPanel {
                     RenderingHints.VALUE_ANTIALIAS_ON);
                 int w = getWidth();
                 int h = getHeight();
-                boolean hover = getModel().isRollover();
+                float hover = hoverAmount();
+                g2.translate(0, pressAmount() * 0.6);
                 if (active) {
-                    UiKit.roundFill(g2, 0, 1, w, h - 2, 12, new Color(0xFF, 0xFF, 0xFF, 26));
-                    g2.setPaint(new GradientPaint(0, 2, PortalTheme.ACCENT, 0, h - 2,
-                        PortalTheme.ACCENT_2));
-                    g2.fill(new java.awt.geom.RoundRectangle2D.Double(0, 6, 3.5, h - 12,
-                        3, 3));
-                    g2.setPaint(new GradientPaint(0, 2, PortalTheme.ACCENT, 0, h - 2,
-                        PortalTheme.ACCENT_2));
-                } else if (hover) {
-                    UiKit.roundFill(g2, 0, 1, w, h - 2, 12, PortalTheme.SIDEBAR_HOVER);
+                    UiKit.roundFill(g2, 0, 1, w, h - 2, 10, PortalTheme.ACCENT);
+                } else if (hover > 0.01f) {
+                    UiKit.roundFill(g2, 0, 1, w, h - 2, 12,
+                        UiKit.blend(Color.WHITE, PortalTheme.SIDEBAR_HOVER, hover));
                 }
-                Color iconColor = active ? PortalTheme.CYAN
-                    : hover ? Color.WHITE : PortalTheme.SIDEBAR_TEXT;
+                Color iconColor = active ? Color.WHITE
+                    : UiKit.blend(PortalTheme.SIDEBAR_TEXT, PortalTheme.ACCENT, hover);
                 icon.paint(g2, 14, (h - 17) / 2.0, 17, iconColor);
                 g2.setFont(getFont());
                 FontMetrics metrics = g2.getFontMetrics();
-                g2.setColor(active ? Color.WHITE : getForeground());
+                g2.setColor(active ? Color.WHITE : iconColor);
                 g2.drawString(getText(), 42, (h - metrics.getHeight()) / 2f + metrics.getAscent());
+                paintFocusRing(g2, w, h, 10);
             } finally {
                 g2.dispose();
             }
         }
     }
 
-    /** Rounded gradient app mark with a sparkle glyph — sidebar + login brand logo. */
+    /** Bundled MEC crest — used consistently on the sidebar and login screen. */
     public static final class LogoTile extends JComponent {
+        private static final BufferedImage LOGO = loadLogo();
+
         public LogoTile() {
             this(34);
         }
@@ -323,14 +312,34 @@ public final class SidebarTabs extends JPanel {
             try {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                     RenderingHints.VALUE_ANTIALIAS_ON);
-                int size = getWidth();
-                g2.setPaint(new GradientPaint(0, 0, PortalTheme.ACCENT, size, size,
-                    PortalTheme.ACCENT_2));
-                g2.fill(new java.awt.geom.RoundRectangle2D.Double(0, 0, size, size,
-                    size * 0.32, size * 0.32));
-                Glyph.SPARKLE.paint(g2, size * 0.22, size * 0.22, size * 0.56, Color.WHITE);
+                int width = getWidth();
+                int height = getHeight();
+                if (LOGO != null) {
+                    double scale = Math.min(width / (double) LOGO.getWidth(),
+                        height / (double) LOGO.getHeight());
+                    int drawWidth = (int) Math.round(LOGO.getWidth() * scale);
+                    int drawHeight = (int) Math.round(LOGO.getHeight() * scale);
+                    int x = (width - drawWidth) / 2;
+                    int y = (height - drawHeight) / 2;
+                    g2.drawImage(LOGO, x, y, drawWidth, drawHeight, null);
+                } else {
+                    int size = Math.min(width, height);
+                    g2.setColor(PortalTheme.ACCENT);
+                    g2.fill(new java.awt.geom.RoundRectangle2D.Double(0, 0, size, size,
+                        size * 0.32, size * 0.32));
+                    Glyph.SPARKLE.paint(g2, size * 0.22, size * 0.22,
+                        size * 0.56, Color.WHITE);
+                }
             } finally {
                 g2.dispose();
+            }
+        }
+
+        private static BufferedImage loadLogo() {
+            try (var stream = LogoTile.class.getResourceAsStream("/mec-logo.png")) {
+                return stream == null ? null : ImageIO.read(stream);
+            } catch (IOException exception) {
+                return null;
             }
         }
     }

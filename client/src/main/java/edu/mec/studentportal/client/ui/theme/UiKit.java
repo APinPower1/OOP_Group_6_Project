@@ -20,7 +20,11 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.UIManager;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicScrollBarUI;
 
@@ -44,6 +48,9 @@ public final class UiKit {
         put("Label.font", PortalTheme.BODY);
         put("Label.foreground", PortalTheme.INK);
         put("Button.font", PortalTheme.MD_BOLD);
+        put("Button.background", PortalTheme.CARD);
+        put("Button.foreground", PortalTheme.INK);
+        put("Button.focus", PortalTheme.ACCENT);
         put("TextField.font", PortalTheme.MD);
         put("PasswordField.font", PortalTheme.MD);
         put("TextArea.font", PortalTheme.BODY);
@@ -101,17 +108,107 @@ public final class UiKit {
         return card;
     }
 
-    /** Recursively applies table polish (status chip renderer) inside a tab's component tree. */
+    /** Recursively applies the shared smooth table and scroll-pane styling. */
     public static void polishTables(java.awt.Container root) {
         for (java.awt.Component child : root.getComponents()) {
             if (child instanceof javax.swing.JTable table) {
+                table.setRowHeight(42);
+                table.setShowGrid(false);
+                table.setIntercellSpacing(new Dimension(0, 0));
                 applyStatusRenderer(table);
                 table.setFillsViewportHeight(true);
-                table.setIntercellSpacing(new Dimension(0, 0));
+                table.setFont(PortalTheme.BODY);
+                table.setForeground(PortalTheme.INK);
+                table.setBackground(Color.WHITE);
+                table.setSelectionBackground(PortalTheme.TABLE_SELECTION);
+                table.setSelectionForeground(PortalTheme.INK);
+                table.setRowMargin(0);
+                table.setShowHorizontalLines(false);
+                table.setShowVerticalLines(false);
+                table.setFillsViewportHeight(true);
+                table.setDefaultRenderer(Object.class, new TableBodyRenderer());
+                javax.swing.table.JTableHeader header = table.getTableHeader();
+                if (header != null) {
+                    header.setPreferredSize(new Dimension(0, 42));
+                    header.setReorderingAllowed(false);
+                    header.setDefaultRenderer(new TableHeaderRenderer());
+                }
+            }
+            if (child instanceof JScrollPane pane
+                && pane.getViewport() != null
+                && pane.getViewport().getView() instanceof javax.swing.JTable) {
+                pane.setBorder(BorderFactory.createLineBorder(PortalTheme.BORDER, 1, true));
+                pane.setBackground(Color.WHITE);
+                pane.getViewport().setBackground(Color.WHITE);
             }
             if (child instanceof java.awt.Container container) {
                 polishTables(container);
             }
+        }
+    }
+
+    /** A softly tinted rounded surface for filter and action toolbars. */
+    public static JPanel toolbarSurface(java.awt.LayoutManager layout, int top, int left,
+        int bottom, int right) {
+        JPanel panel = new JPanel(layout) {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                Graphics2D g2 = (Graphics2D) graphics.create();
+                try {
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+                    UiKit.roundFill(g2, 0, 0, getWidth(), getHeight(), 15,
+                        PortalTheme.TABLE_HEADER_BG);
+                    UiKit.roundStroke(g2, 0.5, 0.5, getWidth() - 1, getHeight() - 1, 15,
+                        PortalTheme.HAIRLINE, 1f);
+                } finally {
+                    g2.dispose();
+                }
+                super.paintComponent(graphics);
+            }
+        };
+        panel.setOpaque(false);
+        panel.setBorder(new EmptyBorder(top, left, bottom, right));
+        return panel;
+    }
+
+    private static final class TableHeaderRenderer extends DefaultTableCellRenderer {
+        private TableHeaderRenderer() {
+            setOpaque(true);
+            setHorizontalAlignment(SwingConstants.LEFT);
+            setFont(PortalTheme.SM_BOLD);
+            setForeground(PortalTheme.MUTED);
+            setBackground(PortalTheme.TABLE_HEADER_BG);
+            setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, PortalTheme.BORDER),
+                new EmptyBorder(0, 14, 0, 14)));
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table,
+            Object value, boolean selected, boolean focused, int row, int column) {
+            super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+            setText(value == null ? "" : value.toString());
+            return this;
+        }
+    }
+
+    private static final class TableBodyRenderer extends DefaultTableCellRenderer {
+        private TableBodyRenderer() {
+            setBorder(new EmptyBorder(0, 14, 0, 14));
+            setHorizontalAlignment(SwingConstants.LEFT);
+        }
+
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table,
+            Object value, boolean selected, boolean focused, int row, int column) {
+            super.getTableCellRendererComponent(table, value, selected, focused, row, column);
+            setFont(PortalTheme.BODY);
+            setForeground(PortalTheme.INK);
+            setBackground(selected ? PortalTheme.TABLE_SELECTION
+                : row % 2 == 0 ? Color.WHITE : PortalTheme.TABLE_ALT_ROW);
+            setBorder(new EmptyBorder(0, 14, 0, 14));
+            return this;
         }
     }
 
@@ -200,7 +297,7 @@ public final class UiKit {
         }
     }
 
-    /** Primary call-to-action: emerald→teal gradient, hover lift, white bold label. */
+    /** Primary call-to-action: MEC red gradient, hover lift, white bold label. */
     public static GradientButton gradientButton(String text) {
         return new GradientButton(text, null);
     }
@@ -385,6 +482,20 @@ public final class UiKit {
         g2.draw(new java.awt.geom.RoundRectangle2D.Double(x, y, w, h, radius, radius));
     }
 
+    /** Smoothly interpolates colors for small Swing hover and focus transitions. */
+    public static Color blend(Color from, Color to, float amount) {
+        float progress = Math.max(0f, Math.min(1f, amount));
+        return new Color(
+            Math.round(from.getRed() + (to.getRed() - from.getRed()) * progress),
+            Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * progress),
+            Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * progress),
+            Math.round(from.getAlpha() + (to.getAlpha() - from.getAlpha()) * progress));
+    }
+
+    private static Color mix(Color from, Color to, float amount) {
+        return blend(from, to, amount);
+    }
+
     public static String ellipsize(FontMetrics metrics, String text, int maxWidth) {
         if (text == null || metrics.stringWidth(text) <= maxWidth) {
             return text == null ? "" : text;
@@ -418,8 +529,8 @@ public final class UiKit {
                 double h = getHeight() - 14.0;
                 double radius = PortalTheme.RADIUS_CARD;
                 Color[] shadowLayers = {
-                    new Color(0x1A, 0x2B, 0x24, 16),
-                    new Color(0x1A, 0x2B, 0x24, 26),
+                    new Color(0x2B, 0x2E, 0x36, 12),
+                    new Color(0x2B, 0x2E, 0x36, 20),
                 };
                 for (int i = shadowLayers.length - 1; i >= 0; i--) {
                     double offset = 2.0 * (i + 1);
@@ -429,7 +540,7 @@ public final class UiKit {
                 }
                 g2.setColor(PortalTheme.CARD);
                 g2.fill(new java.awt.geom.RoundRectangle2D.Double(x, y, w, h, radius, radius));
-                g2.setColor(new Color(0x1A, 0x2B, 0x24, 14));
+                g2.setColor(new Color(0x2B, 0x2E, 0x36, 12));
                 g2.setStroke(new BasicStroke(1f));
                 g2.draw(new java.awt.geom.RoundRectangle2D.Double(
                     x + 0.5, y + 0.5, w - 1, h - 1, radius, radius));
@@ -439,7 +550,87 @@ public final class UiKit {
         }
     }
 
-    public static final class GradientButton extends JButton {
+    /** Shared 150 ms hover/press motion and accessible keyboard focus for custom controls. */
+    public abstract static class AnimatedButton extends JButton implements ChangeListener {
+        private final Timer motionTimer = new Timer(15, event -> advanceMotion());
+        private float hoverAmount;
+        private float pressAmount;
+
+        protected AnimatedButton(String text) {
+            super(text);
+            setRolloverEnabled(true);
+            setFocusPainted(false);
+            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+            getModel().addChangeListener(this);
+            if (text != null && !text.isBlank()) {
+                getAccessibleContext().setAccessibleName(text);
+            }
+        }
+
+        @Override
+        public void stateChanged(ChangeEvent event) {
+            if (!motionTimer.isRunning()) {
+                motionTimer.start();
+            }
+            repaint();
+        }
+
+        @Override
+        public void setEnabled(boolean enabled) {
+            super.setEnabled(enabled);
+            setCursor(new java.awt.Cursor(enabled
+                ? java.awt.Cursor.HAND_CURSOR : java.awt.Cursor.DEFAULT_CURSOR));
+            repaint();
+        }
+
+        protected final float hoverAmount() {
+            return hoverAmount;
+        }
+
+        protected final float pressAmount() {
+            return pressAmount;
+        }
+
+        protected final void paintHoverShadow(Graphics2D graphics, int width, int height,
+            double radius) {
+            if (isEnabled() && hoverAmount > 0.01f) {
+                int alpha = Math.round(14 * hoverAmount);
+                roundFill(graphics, 2, 4, width - 4, height - 6, radius,
+                    new Color(0x32, 0x1D, 0x20, alpha));
+            }
+        }
+
+        protected final void paintFocusRing(Graphics2D graphics, int width, int height,
+            double radius) {
+            if (hasFocus() && isEnabled()) {
+                roundStroke(graphics, 1.5, 0.5, width - 3, height - 2, radius + 3,
+                    new Color(PortalTheme.ACCENT.getRed(), PortalTheme.ACCENT.getGreen(),
+                        PortalTheme.ACCENT.getBlue(), 110), 2f);
+            }
+        }
+
+        private void advanceMotion() {
+            float targetHover = isEnabled() && getModel().isRollover() ? 1f : 0f;
+            float targetPress = isEnabled() && getModel().isPressed()
+                && getModel().isArmed() ? 1f : 0f;
+            hoverAmount = approach(hoverAmount, targetHover);
+            pressAmount = approach(pressAmount, targetPress);
+            repaint();
+            if (Math.abs(hoverAmount - targetHover) < 0.015f
+                && Math.abs(pressAmount - targetPress) < 0.015f) {
+                hoverAmount = targetHover;
+                pressAmount = targetPress;
+                motionTimer.stop();
+            }
+        }
+
+        private static float approach(float current, float target) {
+            float next = current + (target - current) * 0.34f;
+            return Math.abs(next - target) < 0.015f ? target : next;
+        }
+    }
+
+    public static final class GradientButton extends AnimatedButton {
         private final Glyph trailing;
 
         private GradientButton(String text, Glyph trailing) {
@@ -449,9 +640,6 @@ public final class UiKit {
             setFont(PortalTheme.MD_BOLD);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setFocusPainted(false);
-            setRolloverEnabled(true);
-            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(12, 22, 12, 22));
             setPreferredSize(new Dimension(
                 getPreferredSize().width, Math.max(getPreferredSize().height, 46)));
@@ -467,22 +655,22 @@ public final class UiKit {
                     RenderingHints.VALUE_RENDER_QUALITY);
                 int w = getWidth();
                 int h = getHeight();
-                Color start = PortalTheme.ACCENT;
-                Color end = PortalTheme.ACCENT_2;
+                g2.translate(0, pressAmount() * 1.1);
+                paintHoverShadow(g2, w, h, PortalTheme.RADIUS_BUTTON);
+                Color start = mix(PortalTheme.ACCENT,
+                    lighten(PortalTheme.ACCENT, 0.10f), hoverAmount());
+                Color end = mix(PortalTheme.ACCENT_2,
+                    lighten(PortalTheme.ACCENT_2, 0.10f), hoverAmount());
+                start = mix(start, start.darker(), pressAmount());
+                end = mix(end, end.darker(), pressAmount());
                 if (!isEnabled()) {
-                    start = new Color(0x9C, 0xB4, 0xA6);
-                    end = new Color(0x8A, 0xA4, 0x94);
-                } else if (getModel().isPressed()) {
-                    start = start.darker();
-                    end = end.darker();
-                } else if (getModel().isRollover()) {
-                    start = lighten(start, 0.10f);
-                    end = lighten(end, 0.10f);
+                    start = new Color(0xC7, 0xC9, 0xCE);
+                    end = new Color(0xB8, 0xBA, 0xC0);
                 }
                 g2.setPaint(new GradientPaint(0, 0, start, w, h, end));
                 g2.fill(new java.awt.geom.RoundRectangle2D.Double(
                     1, 2, w - 2, h - 4, PortalTheme.RADIUS_BUTTON, PortalTheme.RADIUS_BUTTON));
-                g2.setColor(new Color(0x05, 0x5E, 0x43, 70));
+                g2.setColor(new Color(0x8F, 0x16, 0x1C, 60));
                 g2.setStroke(new BasicStroke(1f));
                 g2.draw(new java.awt.geom.RoundRectangle2D.Double(
                     1.5, 2.5, w - 3, h - 5, PortalTheme.RADIUS_BUTTON, PortalTheme.RADIUS_BUTTON));
@@ -500,20 +688,18 @@ public final class UiKit {
                     trailing.paint(g2, startX + textWidth + 6,
                         (h - 16) / 2.0, 16, getForeground());
                 }
+                paintFocusRing(g2, w, h, PortalTheme.RADIUS_BUTTON);
             } finally {
                 g2.dispose();
             }
         }
 
         private static Color lighten(Color color, float amount) {
-            return new Color(
-                Math.min(255, Math.round(color.getRed() + 255 * amount)),
-                Math.min(255, Math.round(color.getGreen() + 255 * amount)),
-                Math.min(255, Math.round(color.getBlue() + 255 * amount)));
+            return mix(color, Color.WHITE, amount);
         }
     }
 
-    private static final class GhostButton extends JButton {
+    private static final class GhostButton extends AnimatedButton {
         private final Glyph glyph;
 
         private GhostButton(String text, Glyph glyph) {
@@ -523,9 +709,6 @@ public final class UiKit {
             setForeground(PortalTheme.INK);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setFocusPainted(false);
-            setRolloverEnabled(true);
-            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(10, 16, 10, 16));
         }
 
@@ -537,14 +720,23 @@ public final class UiKit {
                     RenderingHints.VALUE_ANTIALIAS_ON);
                 int w = getWidth();
                 int h = getHeight();
-                boolean hover = getModel().isRollover();
-                boolean pressed = getModel().isPressed();
-                if (hover || pressed) {
-                    UiKit.roundFill(g2, 1, 2, w - 2, h - 4, PortalTheme.RADIUS_BUTTON,
-                        pressed ? new Color(0xC6, 0xEE, 0xD9) : PortalTheme.ACCENT_SOFT);
+                g2.translate(0, pressAmount() * 0.8);
+                paintHoverShadow(g2, w, h, PortalTheme.RADIUS_BUTTON);
+                Color fill = mix(PortalTheme.ACCENT_SOFT,
+                    new Color(0xF7, 0xD5, 0xD7), pressAmount());
+                int fillAlpha = Math.round(235 * Math.max(hoverAmount(), pressAmount()));
+                if (isEnabled() && fillAlpha > 0) {
+                    g2.setColor(new Color(fill.getRed(), fill.getGreen(), fill.getBlue(),
+                        fillAlpha));
+                    g2.fill(new java.awt.geom.RoundRectangle2D.Double(
+                        1, 2, w - 2, h - 4, PortalTheme.RADIUS_BUTTON,
+                        PortalTheme.RADIUS_BUTTON));
                 }
+                Color border = isEnabled()
+                    ? mix(PortalTheme.BORDER, PortalTheme.ACCENT, hoverAmount())
+                    : PortalTheme.HAIRLINE;
                 UiKit.roundStroke(g2, 1.5, 2.5, w - 3, h - 5, PortalTheme.RADIUS_BUTTON,
-                    hover ? PortalTheme.ACCENT : PortalTheme.BORDER, 1.3f);
+                    border, 1.3f);
                 g2.setFont(getFont());
                 FontMetrics metrics = g2.getFontMetrics();
                 String label = getText();
@@ -552,19 +744,22 @@ public final class UiKit {
                 int glyphSpace = glyph == null ? 0 : 20;
                 int startX = (w - textWidth - glyphSpace) / 2;
                 int textY = (h - metrics.getHeight()) / 2 + metrics.getAscent();
-                g2.setColor(hover ? PortalTheme.ACCENT : PortalTheme.INK);
+                g2.setColor(!isEnabled() ? PortalTheme.MUTED
+                    : mix(PortalTheme.INK, PortalTheme.ACCENT, hoverAmount()));
                 g2.drawString(label, startX, textY);
                 if (glyph != null) {
                     glyph.paint(g2, startX + textWidth + 6, (h - 15) / 2.0, 15,
-                        hover ? PortalTheme.ACCENT : PortalTheme.MUTED);
+                        !isEnabled() ? PortalTheme.MUTED
+                            : mix(PortalTheme.MUTED, PortalTheme.ACCENT, hoverAmount()));
                 }
+                paintFocusRing(g2, w, h, PortalTheme.RADIUS_BUTTON);
             } finally {
                 g2.dispose();
             }
         }
     }
 
-    private static final class DarkButton extends JButton {
+    private static final class DarkButton extends AnimatedButton {
         private final Glyph glyph;
 
         private DarkButton(String text, Glyph glyph) {
@@ -574,9 +769,6 @@ public final class UiKit {
             setForeground(Color.WHITE);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setFocusPainted(false);
-            setRolloverEnabled(true);
-            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(10, 16, 10, 16));
         }
 
@@ -588,8 +780,12 @@ public final class UiKit {
                     RenderingHints.VALUE_ANTIALIAS_ON);
                 int w = getWidth();
                 int h = getHeight();
-                Color bg = getModel().isPressed() ? new Color(0x0B, 0x23, 0x1A)
-                    : getModel().isRollover() ? new Color(0x24, 0x50, 0x41) : PortalTheme.INK;
+                g2.translate(0, pressAmount() * 0.8);
+                paintHoverShadow(g2, w, h, PortalTheme.RADIUS_BUTTON);
+                Color bg = isEnabled()
+                    ? mix(PortalTheme.INK, new Color(0x36, 0x3D, 0x49), hoverAmount())
+                    : PortalTheme.SLATE;
+                bg = mix(bg, new Color(0x12, 0x17, 0x21), pressAmount());
                 UiKit.roundFill(g2, 1, 2, w - 2, h - 4, PortalTheme.RADIUS_BUTTON, bg);
                 g2.setFont(getFont());
                 FontMetrics metrics = g2.getFontMetrics();
@@ -604,22 +800,20 @@ public final class UiKit {
                     glyph.paint(g2, startX + textWidth + 6, (h - 15) / 2.0, 15,
                         getForeground());
                 }
+                paintFocusRing(g2, w, h, PortalTheme.RADIUS_BUTTON);
             } finally {
                 g2.dispose();
             }
         }
     }
 
-    private static final class PillButton extends JButton {
+    private static final class PillButton extends AnimatedButton {
         private PillButton(String text) {
             super(text);
             setFont(PortalTheme.SM_BOLD);
             setForeground(PortalTheme.ACCENT);
             setContentAreaFilled(false);
             setBorderPainted(false);
-            setFocusPainted(false);
-            setRolloverEnabled(true);
-            setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             setBorder(new EmptyBorder(7, 14, 7, 14));
         }
 
@@ -631,14 +825,17 @@ public final class UiKit {
                     RenderingHints.VALUE_ANTIALIAS_ON);
                 int w = getWidth();
                 int h = getHeight();
-                boolean hover = getModel().isRollover();
+                float hover = hoverAmount();
+                float press = pressAmount();
                 UiKit.roundFill(g2, 0, 0, w, h, h / 2.0,
-                    hover ? new Color(0xC8, 0xEE, 0xDB) : PortalTheme.ACCENT_SOFT);
+                    mix(PortalTheme.ACCENT_SOFT, new Color(0xF7, 0xD5, 0xD7),
+                        Math.max(hover, press)));
                 g2.setFont(getFont());
                 FontMetrics metrics = g2.getFontMetrics();
-                g2.setColor(getForeground());
+                g2.setColor(isEnabled() ? getForeground() : PortalTheme.MUTED);
                 g2.drawString(getText(), (w - metrics.stringWidth(getText())) / 2f,
                     (h - metrics.getHeight()) / 2f + metrics.getAscent());
+                paintFocusRing(g2, w, h, h / 2.0);
             } finally {
                 g2.dispose();
             }
@@ -771,7 +968,7 @@ public final class UiKit {
         @Override
         protected void configureScrollBarColors() {
             trackColor = new Color(0, 0, 0, 0);
-            thumbColor = new Color(0xBD, 0xD3, 0xC4);
+            thumbColor = new Color(0xD1, 0xD3, 0xD8);
             thumbDarkShadowColor = new Color(0, 0, 0, 0);
             thumbHighlightColor = new Color(0, 0, 0, 0);
             thumbLightShadowColor = new Color(0, 0, 0, 0);
@@ -798,7 +995,7 @@ public final class UiKit {
                 int arc = Math.min(8, bounds.width);
                 int x = bounds.x + 2;
                 int width = Math.max(4, bounds.width - 4);
-                g2.setColor(new Color(0xBD, 0xD3, 0xC4));
+                g2.setColor(new Color(0xD1, 0xD3, 0xD8));
                 g2.fill(new java.awt.geom.RoundRectangle2D.Double(
                     x, bounds.y + 3, width, bounds.height - 6, arc, arc));
             } finally {

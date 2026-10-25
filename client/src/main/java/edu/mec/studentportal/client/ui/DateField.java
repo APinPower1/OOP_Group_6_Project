@@ -72,7 +72,10 @@ public final class DateField extends JPanel {
         YearMonth month = current == null ? YearMonth.now() : YearMonth.from(current);
         JPopupMenu popup = new JPopupMenu();
         popup.setBorder(new EmptyBorder(8, 8, 8, 8));
-        popup.add(buildCalendar(popup, month, current));
+        JPanel cal = buildCalendar(popup, month, current);
+        cal.setPreferredSize(new java.awt.Dimension(230, 200));
+        popup.add(cal);
+        popup.pack();
         popup.show(this, 0, getHeight());
     }
 

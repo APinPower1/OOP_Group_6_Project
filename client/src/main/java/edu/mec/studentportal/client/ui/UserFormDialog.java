@@ -30,23 +30,26 @@ final class UserFormDialog {
     private final JPanel panel = new JPanel(new BorderLayout(8, 8));
     private final JTextField fullName = new JTextField(28);
     private final JTextField email = new JTextField(28);
-    private final JTextField department = new JTextField(28);
+    private final JComboBox<String> department = new JComboBox<>(new String[] {"CSE", "ECE", "EEE", "EB", "MECH"});
     private final JTextField password = new JTextField(28);
     private final JComboBox<Role> role = new JComboBox<>(Role.values());
     private final CardLayout profileCards = new CardLayout();
     private final JPanel profilePanel = new JPanel(profileCards);
 
     private final JTextField studentRoll = new JTextField();
-    private final JTextField studentSemester = new JTextField(6);
-    private final JTextField studentBatch = new JTextField();
+    private final JComboBox<String> studentSemester = new JComboBox<>(new String[] {"1", "2", "3", "4", "5", "6", "7", "8"});
+    private final JComboBox<String> studentBatch = new JComboBox<>();
     private final JTextField organizerDesignation = new JTextField();
     private final JTextField facultyEmployeeId = new JTextField();
     private final JTextField facultyDesignation = new JTextField();
     private final JTextField adminLevel = new JTextField("1");
 
     private UserFormDialog(boolean create) {
-        for (JTextField field : java.util.List.of(fullName, email, department, password,
-            studentRoll, studentSemester, studentBatch, organizerDesignation,
+        department.setEditable(true);
+        studentSemester.setEditable(true);
+        studentBatch.setEditable(true);
+        for (JTextField field : java.util.List.of(fullName, email, password,
+            studentRoll, organizerDesignation,
             facultyEmployeeId, facultyDesignation, adminLevel)) {
             edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(field);
         }
@@ -64,6 +67,9 @@ final class UserFormDialog {
         identity.add(new JLabel("Role"));
         identity.add(role);
 
+        for (int y = 2025; y <= 2032; y++) {
+            studentBatch.addItem(String.valueOf(y));
+        }
         profilePanel.add(profileRow("Roll number", studentRoll,
             "Semester", studentSemester,
             "Batch", studentBatch), "STUDENT");
@@ -96,8 +102,8 @@ final class UserFormDialog {
         if (initialEmail != null) {
             dialog.email.setText(initialEmail);
         }
-        if (initialDepartment != null) {
-            dialog.department.setText(initialDepartment);
+        if (initialDepartment != null && !initialDepartment.isBlank()) {
+            dialog.department.setSelectedItem(initialDepartment);
         }
         if (initialRole != null) {
             dialog.role.setSelectedItem(initialRole);
@@ -118,7 +124,7 @@ final class UserFormDialog {
             dialog.fullName.getText().trim(),
             dialog.email.getText().trim(),
             pwd == null ? null : pwd,
-            dialog.department.getText().trim(),
+            String.valueOf(dialog.department.getSelectedItem()).trim(),
             selectedRole,
             dialog.profileFor(selectedRole)
         );
@@ -131,8 +137,10 @@ final class UserFormDialog {
         switch (selectedRole) {
             case STUDENT -> {
                 studentRoll.setText(str(profile.get("rollNumber")));
-                studentSemester.setText(str(profile.get("semester")));
-                studentBatch.setText(str(profile.get("batch")));
+                Object sem = profile.get("semester");
+                if (sem != null) { studentSemester.setSelectedItem(String.valueOf(sem)); }
+                Object bat = profile.get("batch");
+                if (bat != null) { studentBatch.setSelectedItem(String.valueOf(bat)); }
             }
             case ORGANIZER -> organizerDesignation.setText(str(profile.get("designation")));
             case FACULTY -> {
@@ -149,8 +157,10 @@ final class UserFormDialog {
         switch (selectedRole) {
             case STUDENT -> {
                 profile.put("rollNumber", studentRoll.getText().trim());
-                profile.put("semester", parsePositiveInt(studentSemester.getText(), 1));
-                profile.put("batch", studentBatch.getText().trim());
+                profile.put("semester", parsePositiveInt(String.valueOf(
+                    studentSemester.getSelectedItem() == null ? "1" : studentSemester.getSelectedItem()), 1));
+                profile.put("batch", String.valueOf(
+                    studentBatch.getSelectedItem() == null ? "2025" : studentBatch.getSelectedItem()).trim());
             }
             case ORGANIZER -> profile.put("designation", organizerDesignation.getText().trim());
             case FACULTY -> {
@@ -162,15 +172,15 @@ final class UserFormDialog {
         return profile;
     }
 
-    private static JPanel profileRow(String label1, javax.swing.JTextField field1) {
+    private static JPanel profileRow(String label1, java.awt.Component field1) {
         JPanel row = new JPanel(new GridLayout(1, 2, 6, 0));
         row.add(new JLabel(label1));
         row.add(field1);
         return row;
     }
 
-    private static JPanel profileRow(String label1, javax.swing.JTextField field1,
-        String label2, javax.swing.JTextField field2) {
+    private static JPanel profileRow(String label1, java.awt.Component field1,
+        String label2, java.awt.Component field2) {
         JPanel left = profileRow(label1, field1);
         JPanel right = profileRow(label2, field2);
         JPanel wrapper = new JPanel(new GridLayout(1, 2, 8, 0));
@@ -179,9 +189,9 @@ final class UserFormDialog {
         return wrapper;
     }
 
-    private static JPanel profileRow(String label1, javax.swing.JTextField field1,
-        String label2, javax.swing.JTextField field2,
-        String label3, javax.swing.JTextField field3) {
+    private static JPanel profileRow(String label1, java.awt.Component field1,
+        String label2, java.awt.Component field2,
+        String label3, java.awt.Component field3) {
         JPanel wrapper = new JPanel(new GridLayout(0, 1));
         wrapper.add(profileRow(label1, field1));
         JPanel pair = new JPanel(new GridLayout(1, 2, 6, 0));

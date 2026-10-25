@@ -21,10 +21,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JButton;
+import javax.swing.JTextField;
+import javax.swing.JOptionPane;
+import javax.swing.JLabel;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 
@@ -132,7 +137,16 @@ public final class OrganizerDashboard extends DashboardPanel {
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(buttons, BorderLayout.NORTH);
-        panel.add(new JScrollPane(announcementsTable), BorderLayout.CENTER);
+        JScrollPane annScroll = new JScrollPane(announcementsTable);
+        panel.add(annScroll, BorderLayout.CENTER);
+        announcementsTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    showAnnouncementDetails();
+                }
+            }
+        });
         return panel;
     }
 
@@ -405,20 +419,52 @@ public final class OrganizerDashboard extends DashboardPanel {
     }
 
     private void postAnnouncement(JButton trigger) {
-        String[] labels = { "Title", "Content", "Audience (blank=Everyone)" };
-        String[] values = UiSupport.form(this, "Post announcement", labels,
-            new String[] { "", "", "" });
-        if (values == null) {
+        JPanel main = new JPanel(new java.awt.BorderLayout(8, 8));
+        JPanel form = new JPanel(new java.awt.GridBagLayout());
+        java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
+        gbc.insets = new java.awt.Insets(4, 4, 4, 4);
+        gbc.anchor = java.awt.GridBagConstraints.WEST;
+        gbc.fill = java.awt.GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0; gbc.gridy = 0;
+        form.add(new JLabel("Title"), gbc);
+        gbc.gridx = 1;
+        javax.swing.JTextField titleField = new javax.swing.JTextField(28);
+        edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(titleField);
+        form.add(titleField, gbc);
+        gbc.gridx = 0; gbc.gridy = 1;
+        form.add(new JLabel("Audience"), gbc);
+        gbc.gridx = 1;
+        String[] audienceOptions = {"ALL", "STUDENT", "FACULTY", "ORGANIZER", "ADMIN"};
+        JComboBox<String> audienceBox = new JComboBox<>(audienceOptions);
+        form.add(audienceBox, gbc);
+        gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = java.awt.GridBagConstraints.NORTHWEST;
+        form.add(new JLabel("Content"), gbc);
+        gbc.gridx = 1; gbc.fill = java.awt.GridBagConstraints.BOTH;
+        javax.swing.JTextArea contentArea = new javax.swing.JTextArea(8, 28);
+        contentArea.setLineWrap(true);
+        contentArea.setWrapStyleWord(true);
+        contentArea.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0xCCCCCC)));
+        edu.mec.studentportal.client.ui.theme.UiKit.enableTextEditing(contentArea);
+        javax.swing.JScrollPane contentScroll = new javax.swing.JScrollPane(contentArea);
+        contentScroll.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0xCCCCCC)));
+        contentScroll.setPreferredSize(new java.awt.Dimension(340, 160));
+        form.add(contentScroll, gbc);
+        main.add(form, java.awt.BorderLayout.CENTER);
+        int result = JOptionPane.showConfirmDialog(this, main, "Post Announcement", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result != JOptionPane.OK_OPTION) {
             return;
         }
-        if (values[0].isEmpty() || values[1].isEmpty()) {
+        String title = titleField.getText().trim();
+        String content = contentArea.getText().trim();
+        if (title.isEmpty() || content.isEmpty()) {
             UiSupport.info(this, "Title and content are required.");
             return;
         }
-        String audience = values[2].isEmpty() ? null : values[2];
+        Object sel = audienceBox.getSelectedItem();
+        String audience = sel == null || "ALL".equals(sel) ? null : sel.toString();
         status("Publishing announcement…");
         ApiTask.run(
-            () -> api.post("/announcements", new AnnouncementRequest(values[0], values[1],
+            () -> api.post("/announcements", new AnnouncementRequest(title, content,
                 audience), AnnouncementDto.class),
             created -> {
                 status("Announcement published.");
@@ -427,6 +473,32 @@ public final class OrganizerDashboard extends DashboardPanel {
             this::error,
             trigger
         );
+    }
+
+
+    private void showAnnouncementDetails() {
+        int row = announcementsTable.getSelectedRow();
+        if (row < 0 || announcementRows == null) {
+            return;
+        }
+        int modelRow = announcementsTable.convertRowIndexToModel(row);
+        if (modelRow < 0 || modelRow >= announcementRows.size()) {
+            return;
+        }
+        AnnouncementDto ann = announcementRows.get(modelRow);
+        JPanel panel = new JPanel(new java.awt.BorderLayout(6, 6));
+        JLabel title = new JLabel(ann.title() == null ? "" : ann.title());
+        title.setFont(title.getFont().deriveFont(java.awt.Font.BOLD, 14f));
+        panel.add(title, java.awt.BorderLayout.NORTH);
+        JTextArea content = new JTextArea(ann.content() == null ? "" : ann.content());
+        content.setEditable(false);
+        content.setLineWrap(true);
+        content.setWrapStyleWord(true);
+        content.setBackground(panel.getBackground());
+        JScrollPane sp = new JScrollPane(content);
+        sp.setPreferredSize(new java.awt.Dimension(400, 200));
+        panel.add(sp, java.awt.BorderLayout.CENTER);
+        JOptionPane.showMessageDialog(this, panel, "Announcement", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void archiveSelected(JButton trigger) {
