@@ -899,7 +899,7 @@ public final class AdminDashboard extends DashboardPanel {
         gbc.gridx = 0; gbc.gridy = 1;
         form.add(new JLabel("Audience"), gbc);
         gbc.gridx = 1;
-        JComboBox<String> audienceBox = new JComboBox<>(new String[] {"ALL", "STUDENTS", "FACULTY", "ORGANIZERS", "ADMINS"});
+        JComboBox<String> audienceBox = new JComboBox<>(new String[] {"ALL", "STUDENT", "FACULTY", "ORGANIZER", "ADMIN"});
         form.add(audienceBox, gbc);
         gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = java.awt.GridBagConstraints.NORTHWEST;
         form.add(new JLabel("Content"), gbc);

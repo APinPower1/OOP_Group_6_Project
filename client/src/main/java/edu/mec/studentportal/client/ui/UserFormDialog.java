@@ -7,7 +7,6 @@ import java.awt.Component;
 import java.awt.GridLayout;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -38,7 +37,7 @@ final class UserFormDialog {
     private final JPanel profilePanel = new JPanel(profileCards);
 
     private final JTextField studentRoll = new JTextField();
-    private final JComboBox<String> studentSemester = new JComboBox<>(new String[] {"S1", "S3", "S5", "S7"});
+    private final JComboBox<String> studentSemester = new JComboBox<>(new String[] {"1", "2", "3", "4", "5", "6", "7", "8"});
     private final JComboBox<String> studentBatch = new JComboBox<>();
     private final JTextField organizerDesignation = new JTextField();
     private final JTextField facultyEmployeeId = new JTextField();
@@ -46,6 +45,9 @@ final class UserFormDialog {
     private final JTextField adminLevel = new JTextField("1");
 
     private UserFormDialog(boolean create) {
+        department.setEditable(true);
+        studentSemester.setEditable(true);
+        studentBatch.setEditable(true);
         for (JTextField field : java.util.List.of(fullName, email, password,
             studentRoll, organizerDesignation,
             facultyEmployeeId, facultyDesignation, adminLevel)) {
@@ -155,8 +157,10 @@ final class UserFormDialog {
         switch (selectedRole) {
             case STUDENT -> {
                 profile.put("rollNumber", studentRoll.getText().trim());
-                profile.put("semester", studentSemester.getSelectedItem() == null ? "S1" : studentSemester.getSelectedItem());
-                profile.put("batch", studentBatch.getSelectedItem() == null ? "2025" : studentBatch.getSelectedItem());
+                profile.put("semester", parsePositiveInt(String.valueOf(
+                    studentSemester.getSelectedItem() == null ? "1" : studentSemester.getSelectedItem()), 1));
+                profile.put("batch", String.valueOf(
+                    studentBatch.getSelectedItem() == null ? "2025" : studentBatch.getSelectedItem()).trim());
             }
             case ORGANIZER -> profile.put("designation", organizerDesignation.getText().trim());
             case FACULTY -> {

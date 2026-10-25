@@ -434,7 +434,7 @@ public final class OrganizerDashboard extends DashboardPanel {
         gbc.gridx = 0; gbc.gridy = 1;
         form.add(new JLabel("Audience"), gbc);
         gbc.gridx = 1;
-        String[] audienceOptions = {"ALL", "STUDENTS", "FACULTY", "ORGANIZERS", "ADMINS"};
+        String[] audienceOptions = {"ALL", "STUDENT", "FACULTY", "ORGANIZER", "ADMIN"};
         JComboBox<String> audienceBox = new JComboBox<>(audienceOptions);
         form.add(audienceBox, gbc);
         gbc.gridx = 0; gbc.gridy = 2; gbc.anchor = java.awt.GridBagConstraints.NORTHWEST;
