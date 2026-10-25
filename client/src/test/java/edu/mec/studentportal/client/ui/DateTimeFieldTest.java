@@ -3,6 +3,7 @@ package edu.mec.studentportal.client.ui;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.awt.event.FocusEvent;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import org.junit.jupiter.api.Test;
@@ -56,5 +57,59 @@ class DateTimeFieldTest {
 
         field.setTime(null);
         assertNull(field.getTime());
+    }
+
+    @Test
+    void dateFieldBlocksPickingUntilTheGuardAllowsIt() {
+        DateField field = new DateField();
+        int[] notified = {0};
+        field.setSelectionBlocked(() -> true, () -> notified[0]++);
+
+        field.pickButton().doClick();
+
+        assertEquals(1, notified[0]);
+        assertNull(field.getDate());
+    }
+
+    @Test
+    void focusOnBlockedFieldsNotifiesAndLiftsWhenGuardAllows() {
+        DateField dateField = new DateField();
+        TimeField timeField = new TimeField();
+        boolean[] startMissing = {true};
+        int[] notified = {0};
+        Runnable warn = () -> notified[0]++;
+        dateField.setSelectionBlocked(() -> startMissing[0], warn);
+        timeField.setSelectionBlocked(() -> startMissing[0], warn);
+
+        fireFocusGain(dateField.inputField(), DateField.class);
+        fireFocusGain(timeField, TimeField.class);
+        assertEquals(2, notified[0]);
+
+        startMissing[0] = false;
+        fireFocusGain(dateField.inputField(), DateField.class);
+        fireFocusGain(timeField, TimeField.class);
+        assertEquals(2, notified[0]);
+    }
+
+    /** Swing components ignore synthetic focus dispatch, so invoke the registered listener. */
+    private static void fireFocusGain(java.awt.Component component, Class<?> owner) {
+        for (java.awt.event.FocusListener listener : component.getFocusListeners()) {
+            if (listener.getClass().getEnclosingClass() == owner) {
+                listener.focusGained(new FocusEvent(component, FocusEvent.FOCUS_GAINED));
+            }
+        }
+    }
+
+    @Test
+    void pickValidatorRejectsEndBeforeStart() {
+        DateField field = new DateField();
+        assertNull(field.pickValidator().apply(LocalDate.of(2026, 6, 1)));
+
+        field.setPickValidator(date -> date.isBefore(LocalDate.of(2026, 6, 10))
+            ? "End date must be after the start date." : null);
+
+        assertEquals("End date must be after the start date.",
+            field.pickValidator().apply(LocalDate.of(2026, 6, 1)));
+        assertNull(field.pickValidator().apply(LocalDate.of(2026, 6, 15)));
     }
 }

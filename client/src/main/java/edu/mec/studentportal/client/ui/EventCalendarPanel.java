@@ -425,6 +425,8 @@ public final class EventCalendarPanel extends JPanel {
             PortalTheme.ACCENT_SOFT);
         private final JPanel list = new JPanel();
         private final JLabel emptyLabel = new JLabel("No events scheduled", SwingConstants.CENTER);
+        private final JPanel emptyWrap = new JPanel(new BorderLayout(0, 10));
+        private JScrollPane listScroll;
         private LocalDate shownDate;
 
         private DayDetail() {
@@ -451,7 +453,6 @@ public final class EventCalendarPanel extends JPanel {
             list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
             emptyLabel.setFont(PortalTheme.SM);
             emptyLabel.setForeground(PortalTheme.MUTED);
-            JPanel emptyWrap = new JPanel(new BorderLayout(0, 10));
             emptyWrap.setOpaque(false);
             emptyWrap.setBorder(new EmptyBorder(40, 10, 10, 10));
             JComponent bigGlyph = new JComponent() {
@@ -469,11 +470,12 @@ public final class EventCalendarPanel extends JPanel {
             emptyWrap.add(glyphRow, BorderLayout.NORTH);
             emptyWrap.add(emptyLabel, BorderLayout.CENTER);
 
-            JScrollPane scroll = new JScrollPane(list);
-            scroll.setBorder(null);
-            scroll.getViewport().setBackground(Color.WHITE);
-            add(scroll, BorderLayout.CENTER);
+            listScroll = new JScrollPane(list);
+            listScroll.setBorder(null);
+            listScroll.getViewport().setBackground(Color.WHITE);
+            add(listScroll, BorderLayout.CENTER);
             add(emptyWrap, BorderLayout.SOUTH);
+            emptyWrap.setVisible(false);
         }
 
         private void show(CalendarModel calendar, LocalDate date) {
@@ -487,27 +489,20 @@ public final class EventCalendarPanel extends JPanel {
             list.removeAll();
             if (events.isEmpty()) {
                 emptyLabel.setText("No events on " + date.format(DAY_TITLE));
-                scroll(list).setVisible(false);
+                listScroll.setVisible(false);
+                emptyWrap.setVisible(true);
             } else {
                 for (EventDto event : events) {
                     list.add(new EventCard(event));
                     list.add(Box.createVerticalStrut(10));
                 }
-                scroll(list).setVisible(true);
+                listScroll.setVisible(true);
+                emptyWrap.setVisible(false);
             }
             list.revalidate();
             list.repaint();
             revalidate();
             repaint();
-        }
-
-        private JScrollPane scroll(JPanel target) {
-            for (java.awt.Component child : getComponents()) {
-                if (child instanceof JScrollPane pane && pane.getViewport().getView() == target) {
-                    return pane;
-                }
-            }
-            return new JScrollPane();
         }
 
         private final class EventCard extends JPanel {

@@ -20,6 +20,24 @@ public final class TimeField extends JComboBox<String> {
         setEditable(false);
         setFont(PortalTheme.SM);
         setSelectedItem("09:00");
+        addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent event) {
+                if (blocked.getAsBoolean()) {
+                    onBlocked.run();
+                }
+            }
+        });
+    }
+
+    private java.util.function.BooleanSupplier blocked = () -> false;
+    private Runnable onBlocked = () -> { };
+
+    /** Blocks using the time picker while the predicate holds (start-before-end guard). */
+    public void setSelectionBlocked(java.util.function.BooleanSupplier blocked,
+        Runnable onBlocked) {
+        this.blocked = blocked == null ? () -> false : blocked;
+        this.onBlocked = onBlocked == null ? () -> { } : onBlocked;
     }
 
     private static List<String> buildSteps() {

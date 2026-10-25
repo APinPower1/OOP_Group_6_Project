@@ -98,6 +98,26 @@ public final class EventFormDialog {
         content.setBackground(PortalTheme.CARD);
         content.add(form, BorderLayout.CENTER);
 
+        // start must be chosen first: the end controls explain that and send the
+        // user back to the start fields instead of opening.
+        String startFirst = "Select the start date and time first.";
+        java.util.function.BooleanSupplier startMissing =
+            () -> combine(startDate, startTime) == null;
+        Runnable sendToStart = () -> {
+            JOptionPane.showMessageDialog(parent, startFirst, title,
+                JOptionPane.INFORMATION_MESSAGE);
+            javax.swing.SwingUtilities.invokeLater(startDate::requestInputFocus);
+        };
+        endDate.setSelectionBlocked(startMissing, sendToStart);
+        endTime.setSelectionBlocked(startMissing, sendToStart);
+        endDate.setPickValidator(date -> {
+            LocalDate startDay = startDate.getDate();
+            if (startDay != null && date.isBefore(startDay)) {
+                return "End date must be after the start date.";
+            }
+            return null;
+        });
+
         while (true) {
             int result = JOptionPane.showConfirmDialog(parent, content, title,
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
