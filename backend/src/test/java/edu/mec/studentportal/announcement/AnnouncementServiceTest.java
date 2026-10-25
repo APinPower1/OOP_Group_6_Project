@@ -61,18 +61,30 @@ class AnnouncementServiceTest extends DatabaseIntegrationTestSupport {
     }
 
     @Test
-    void onlyOrganizerAndAdminMayPublish() {
-        long student = createStudent();
+    void facultyMayPublish() {
         long faculty = createFaculty();
+        createStudent();
 
-        for (long actor : new long[] { student, faculty }) {
-            ApiException exception = assertThrows(
-                ApiException.class,
-                () -> announcementService.publish(new AnnouncementRequest("X", "Y", null), actor)
-            );
-            assertThat(exception.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
-            assertThat(exception.getCode()).isEqualTo(ApiErrorCodes.FORBIDDEN);
-        }
+        AnnouncementService.PublishResult result = announcementService.publish(
+            new AnnouncementRequest("Faculty Notice", "Department update.", "STUDENT"),
+            faculty
+        );
+
+        assertThat(result.announcement().id()).isPositive();
+        assertThat(result.announcement().status()).isEqualTo(AnnouncementStatus.PUBLISHED);
+        assertThat(result.notificationsCreated()).isEqualTo(1);
+    }
+
+    @Test
+    void studentMayNotPublish() {
+        long student = createStudent();
+
+        ApiException exception = assertThrows(
+            ApiException.class,
+            () -> announcementService.publish(new AnnouncementRequest("X", "Y", null), student)
+        );
+        assertThat(exception.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(exception.getCode()).isEqualTo(ApiErrorCodes.FORBIDDEN);
         assertThat(countRows("announcements", "1 = 1")).isZero();
     }
 
@@ -107,7 +119,7 @@ class AnnouncementServiceTest extends DatabaseIntegrationTestSupport {
     }
 
     @Test
-    void onlyCreatorOrganizerOrAdminMayArchive() {
+    void onlyCreatorOrAdminMayArchive() {
         long owner = createOrganizer();
         long otherOrganizer = createOrganizer();
         long admin = createAdmin();
@@ -124,6 +136,30 @@ class AnnouncementServiceTest extends DatabaseIntegrationTestSupport {
 
         assertThat(announcementService.archive(published.announcement().id(), admin).status())
             .isEqualTo(AnnouncementStatus.ARCHIVED);
+    }
+
+    @Test
+    void facultyMayArchiveOwnAnnouncementButNotAnotherCreators() {
+        long faculty = createFaculty();
+        long otherFaculty = createFaculty();
+        long organizer = createOrganizer();
+        AnnouncementService.PublishResult published = announcementService.publish(
+            new AnnouncementRequest("Faculty Notice", "Body", null),
+            faculty
+        );
+
+        assertThat(announcementService.archive(published.announcement().id(), faculty).status())
+            .isEqualTo(AnnouncementStatus.ARCHIVED);
+
+        AnnouncementService.PublishResult organizerPost = announcementService.publish(
+            new AnnouncementRequest("Organizer Notice", "Body", null),
+            organizer
+        );
+        ApiException denied = assertThrows(
+            ApiException.class,
+            () -> announcementService.archive(organizerPost.announcement().id(), otherFaculty)
+        );
+        assertThat(denied.getStatus()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test

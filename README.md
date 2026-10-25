@@ -120,6 +120,6 @@ Start the backend first, then launch the client in another terminal:
 
 On macOS/Linux use `./gradlew :client:run`. The client uses the HTTP API; it does not connect directly to MySQL.
 
-The desktop client provides role-specific dashboards: students discover and register for events and submit feedback, organizers manage proposals and rosters, faculty review proposals, and administrators manage users, moderation, clubs, announcements and reports. Network requests run outside Swing's Event Dispatch Thread, and the JWT is held in memory only. The default API URL is `http://localhost:8080/api`. To change it, copy `client/client-config.example.properties` to `client/client-config.properties`, or point the `client.config` system property at another properties file.
+The desktop client provides role-specific dashboards: students discover and register for events and submit feedback, organizers manage proposals and rosters, faculty review proposals and post announcements, and administrators manage users, moderation, clubs, announcements and reports. Network requests run outside Swing's Event Dispatch Thread, and the JWT is held in memory only. The default API URL is `http://localhost:8080/api`. To change it, copy `client/client-config.example.properties` to `client/client-config.properties`, or point the `client.config` system property at another properties file.
 
 See `docs/BUILD_COMMANDS.md` for the full command list and `docs/BUILD_BASELINE.md` for the version ownership rules.

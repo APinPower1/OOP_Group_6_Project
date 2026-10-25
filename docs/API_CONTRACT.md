@@ -117,9 +117,9 @@ Important error codes: `EVENT_NOT_FOUND`, `EVENT_NOT_APPROVED`, `REGISTRATION_CL
 | Method | Path | Access | Purpose |
 |---|---|---|---|
 | `GET` | `/announcements` | Signed-in | Students see published announcements matching their role/audience. Staff may see their permitted records. |
-| `POST` | `/announcements` | Organizer/Admin | Publish announcement and create recipient notifications transactionally. |
-| `PUT` | `/announcements/{id}` | Creator Organizer or Admin, only while draft if drafts are implemented | Edit announcement. MVP can create directly as published if draft is omitted. |
-| `POST` | `/announcements/{id}/archive` | Creator Organizer or Admin | Archive; retain history. |
+| `POST` | `/announcements` | Organizer/Faculty/Admin | Publish announcement and create recipient notifications transactionally. |
+| `PUT` | `/announcements/{id}` | Creator Organizer or Faculty, or Admin, only while draft if drafts are implemented | Edit announcement. MVP can create directly as published if draft is omitted. |
+| `POST` | `/announcements/{id}/archive` | Creator Organizer or Faculty, or Admin | Archive; retain history. |
 | `GET` | `/notifications/me` | Signed-in | Current user's notifications. |
 | `PATCH` | `/notifications/{id}/read` | Recipient only | Mark own notification read. |
 

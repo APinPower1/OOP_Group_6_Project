@@ -37,7 +37,7 @@
 - Only Admin manages clubs; only Student changes own membership.
 
 ### Announcements/notifications/feedback
-- Only Organizer/Admin publishes announcement.
+- Only Organizer/Faculty/Admin publishes announcement; faculty may archive only their own.
 - Audience filtering creates notifications only for matching enabled users.
 - A user cannot read/mark another user's notification.
 - Rating 0 or 6 rejected; optional comment may be blank/null.

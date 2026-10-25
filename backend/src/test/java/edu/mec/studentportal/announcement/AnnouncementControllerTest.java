@@ -48,6 +48,25 @@ class AnnouncementControllerTest extends DatabaseIntegrationTestSupport {
     }
 
     @Test
+    void facultyCanPublishAndArchiveOwnAnnouncement() throws Exception {
+        long faculty = createFaculty();
+        createStudent();
+
+        mockMvc.perform(post("/api/announcements")
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, faculty)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"Faculty Notice\",\"content\":\"Body\",\"audienceRole\":\"STUDENT\"}"))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.status").value("PUBLISHED"));
+        long announcementId = jdbcTemplate.queryForObject("SELECT MAX(id) FROM announcements", Long.class);
+
+        mockMvc.perform(post("/api/announcements/{id}/archive", announcementId)
+                .header(TestAuthSecurityConfig.TEST_AUTH_HEADER, faculty))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    @Test
     void studentCannotPublish() throws Exception {
         long student = createStudent();
 

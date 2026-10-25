@@ -10,7 +10,7 @@ Campus events, announcements and club membership are often tracked through disco
 |---|---|
 | `STUDENT` | View approved events and published announcements; register/cancel own registration; browse clubs; join/leave clubs; view own notifications; submit eligible feedback. |
 | `ORGANIZER` | Create event proposals; edit own pending/rejected proposals; cancel own approved events; view registration roster for own events; publish announcements; view feedback for own events. |
-| `FACULTY` | Review and approve/reject event proposals; view events and moderation details; view participation summaries. |
+| `FACULTY` | Review and approve/reject event proposals; view events and moderation details; publish and archive own announcements; view participation summaries. |
 | `ADMIN` | Manage accounts and roles; manage clubs; publish/archive announcements; approve/reject events; cancel events if required; view reports and system-level summaries. |
 
 A role is not enough to authorize ownership-sensitive actions. For example, an Organizer can edit only that Organizer's own pending/rejected event proposals.
@@ -49,7 +49,7 @@ A role is not enough to authorize ownership-sensitive actions. For example, an O
 - Admin can view club members. No separate club-leader role is in scope.
 
 ### Announcements and notifications
-- Organizer/Admin may publish announcements.
+- Organizer/Faculty/Admin may publish announcements. Organizers and faculty archive only their own; admins archive any.
 - An announcement can target all users or one role.
 - When published, notification rows are generated for enabled users matching the audience. Event cancellation also creates notification rows for the event’s confirmed registrants.
 - Students can view their notification list and mark notifications read.
